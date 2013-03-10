@@ -1,5 +1,5 @@
 
-cd descriptor
+cd desc
 make
 make clean
 cd ..
