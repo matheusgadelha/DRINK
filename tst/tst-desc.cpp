@@ -30,6 +30,9 @@
 
 using namespace std;
 
+// Minimum distance between the found keypoint and its transformation
+const float dist_tolerance = 2.0f;
+
 /*!
  * Converts int to string
  * \param n Number to be converted to string
@@ -114,7 +117,7 @@ void distanceMatching(
 		int closest_pt = 0;
 		cv::Point2f current_pt = pts[i];
 
-		for( unsigned j=0; j < kpts.size(); ++j)
+		for( unsigned j=0; j < kpts.size(); ++j )
 		{
 			// Tests if distance between tested points is smaller than the smallest
 			// distance found so far
@@ -124,9 +127,67 @@ void distanceMatching(
 				closest_pt = j;
 			}
 		}
-		// Adds new match to vector
-		matches.push_back(cv::DMatch( i, closest_pt, smallest_dist ));
+		// Tests if distance is small enough to consider a match and adds it to
+		// matches vector
+		if( smallest_dist < dist_tolerance )
+		{
+			matches.push_back(cv::DMatch( i, closest_pt, smallest_dist ));
+		}
 	}
+}
+
+/*!
+ * Computes number of correct matches in err from a ground truth gt
+ * \param err Matching set being tested
+ * \param gt Ground truth matching set
+ * \return Number of correct matches
+ */
+const int computeCorrectMatches( const vector<cv::DMatch>& err,  const vector<cv::DMatch>& gt)
+{
+	int correct_matches = 0;
+	// Iterates over testet matching set
+	for( unsigned i=0; i<err.size(); ++i )
+	{
+		// Stores current match
+		cv::DMatch err_match = err[i];
+		// Iterates over ground truth set
+		for( unsigned j=0; j<gt.size(); ++j )
+		{
+			// If there is an equal match, increment correct matches
+			if(err_match.trainIdx == gt[j].trainIdx && err_match.queryIdx == gt[j].queryIdx )
+			{
+				correct_matches++;
+			}
+		}
+	}
+	return correct_matches;
+}
+
+/*!
+ * Computes number of false matches in err from a ground truth gt
+ * \param err Matching set being tested
+ * \param gt Ground truth matching set
+ * \return Number of false matches
+ */
+const int computeFalseMatches( const vector<cv::DMatch>& err,  const vector<cv::DMatch>& gt)
+{
+	int false_matches = 0;
+	// Iterates over testet matching set
+	for( unsigned i=0; i<err.size(); ++i )
+	{
+		// Stores current match
+		cv::DMatch err_match = err[i];
+		// Iterates over ground truth set
+		for( unsigned j=0; j<gt.size(); ++j )
+		{
+			// If there is an equal match, increment false matches
+			if(err_match.trainIdx == gt[j].trainIdx && err_match.queryIdx != gt[j].queryIdx )
+			{
+				false_matches++;
+			}
+		}
+	}
+	return false_matches;
 }
 
 /*!
@@ -166,7 +227,6 @@ int main( int argc, char** argv)
 	vector<cv::Mat> images;
 	for( int i=1; i <= 6; ++i )
 	{
-		cout << image_prefix + toString(i) + ".ppm" << std::endl;
 		// Creates one image from file in grayscale mode
 		cv::Mat img = cv::imread( image_prefix + toString(i) + ".ppm", CV_LOAD_IMAGE_GRAYSCALE );
 		// Inserts image on images array
@@ -175,8 +235,8 @@ int main( int argc, char** argv)
 
 	// Creates feature detector and descriptors
 	// OBS.: Smart pointers are used in order to easily exchange the descriptor/detector type
-	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::ORB();
-	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB();
+	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::ORB(2000);
+	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB(2000);
 
 	// Creates keypoints/descriptors of the first image an the keypoints/descriptors
 	// of the other images
@@ -186,6 +246,8 @@ int main( int argc, char** argv)
 	//Detects keypoints and extracts its descriptors from the first image
 	feature_detector->detect(images[0], first_kpts);
 	descriptor_extractor->compute(images[0], first_kpts, first_descs);
+
+	cv::BFMatcher bf_matcher(cv::NORM_HAMMING);
 
 	for( int i=1; i<6; ++i )
 	{
@@ -204,21 +266,52 @@ int main( int argc, char** argv)
 		cv::perspectiveTransform( first_points, infered_points, homography );
 
 		// Creates vector containing point matches according to its distance
-		vector<cv::DMatch> matches;
+		vector<cv::DMatch> gt_matches;
 		// Detects key points on the new image
 		feature_detector->detect( images[i], infered_kpts );
 		// Calculates matches based on infered points to keypoints distance.
 		// Since infered_points and first_points have the same size and index
 		// correspondence, the resulting matches can be used to associate image1
 		// points to the other image points. 
-		distanceMatching( infered_kpts, infered_points, matches );
+		distanceMatching( infered_kpts, infered_points, gt_matches );
 
 		//Draw matches
-		cv::Mat matchResult;
-		cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, matches, matchResult);
+		cv::Mat image_matches; // Image containing matches
+		// cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, gt_matches, image_matches);
+
+		// Vector to store knn/radius matches
+		vector< vector<cv::DMatch> > descriptor_matches_complete;
+		// vector to sotre final descriptor matches
+		vector<cv::DMatch> descriptor_matches;
+		// Computes query image descriptors
+		descriptor_extractor->compute(images[i], infered_kpts, infered_descs);
+
+		// Matches and stores on 1-dimensional vector
+		bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, 40);
+		for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
+		{
+			for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
+			{
+				descriptor_matches.push_back(descriptor_matches_complete[j][k]);
+			}
+		}
+
+		cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, descriptor_matches, image_matches);
+
+		// Computes and stores matching info
+		int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
+		int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
+		int num_total_matches = gt_matches.size();
+
+		cout << "-----------------------" << endl;
+		cout << "Correct matches: " << num_correct_matches << endl;
+		cout << "False matches: " << num_false_matches << endl;
+		cout << "Total matches: " << num_total_matches << endl;
+		cout << "-----------------------" << endl;
+		cout << endl << "...Press any key to continue..." << endl;
 
 		// Show matches
-		cv::imshow( "Matches", matchResult );
+		cv::imshow( "Matches", image_matches );
 		cv::waitKey(0);
 	}
 
