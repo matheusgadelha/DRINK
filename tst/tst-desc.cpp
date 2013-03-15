@@ -235,8 +235,8 @@ int main( int argc, char** argv)
 
 	// Creates feature detector and descriptors
 	// OBS.: Smart pointers are used in order to easily exchange the descriptor/detector type
-	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::ORB(2000);
-	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB(2000);
+	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::BRISK();
+	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::BRISK();
 
 	// Creates keypoints/descriptors of the first image an the keypoints/descriptors
 	// of the other images
@@ -247,47 +247,51 @@ int main( int argc, char** argv)
 	feature_detector->detect(images[0], first_kpts);
 	descriptor_extractor->compute(images[0], first_kpts, first_descs);
 
+	// Descriptor matcher using hamming distance
 	cv::BFMatcher bf_matcher(cv::NORM_HAMMING);
 
-	for( int i=1; i<6; ++i )
+	vector< vector<float> > results;
+
+	// Generates homography file name
+	string homography_file = test_folder + "H1to" + toString(4) + "p";
+	cout << homography_file << endl;
+
+	//Creates homography matrix from file
+	cv::Mat homography = matFromFile( homography_file );
+
+	//Creates point2f vectors for all images
+	vector<cv::Point2f> first_points, infered_points, pts_from_kpts;
+	// Converts keypoints to point2f
+	cv::KeyPoint::convert( first_kpts, first_points );
+	// Applies homography transformation to point set
+	cv::perspectiveTransform( first_points, infered_points, homography );
+
+	// Creates vector containing point matches according to its distance
+	vector<cv::DMatch> gt_matches;
+	// Detects key points on the new image
+	feature_detector->detect( images[3], infered_kpts );
+	// Calculates matches based on infered points to keypoints distance.
+	// Since infered_points and first_points have the same size and index
+	// correspondence, the resulting matches can be used to associate image1
+	// points to the other image points. 
+	distanceMatching( infered_kpts, infered_points, gt_matches );
+
+	//Draw matches
+	cv::Mat image_matches; // Image containing matches
+	// cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, gt_matches, image_matches);
+
+	// Vector to store knn/radius matches
+	vector< vector<cv::DMatch> > descriptor_matches_complete;
+	// vector to sotre final descriptor matches
+	vector<cv::DMatch> descriptor_matches;
+	// Computes query image descriptors
+	descriptor_extractor->compute(images[3], infered_kpts, infered_descs);
+
+	// Generate results with different thresholds for matching
+	for( int matching_threshold = 2; matching_threshold < 100; ++matching_threshold )
 	{
-		// Generates homography file name
-		string homography_file = test_folder + "H1to" + toString(i+1) + "p";
-		cout << homography_file << endl;
-
-		//Creates homography matrix from file
-		cv::Mat homography = matFromFile( homography_file );
-
-		//Creates point2f vectors for all images
-		vector<cv::Point2f> first_points, infered_points, pts_from_kpts;
-		// Converts keypoints to point2f
-		cv::KeyPoint::convert( first_kpts, first_points );
-		// Applies homography transformation to point set
-		cv::perspectiveTransform( first_points, infered_points, homography );
-
-		// Creates vector containing point matches according to its distance
-		vector<cv::DMatch> gt_matches;
-		// Detects key points on the new image
-		feature_detector->detect( images[i], infered_kpts );
-		// Calculates matches based on infered points to keypoints distance.
-		// Since infered_points and first_points have the same size and index
-		// correspondence, the resulting matches can be used to associate image1
-		// points to the other image points. 
-		distanceMatching( infered_kpts, infered_points, gt_matches );
-
-		//Draw matches
-		cv::Mat image_matches; // Image containing matches
-		// cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, gt_matches, image_matches);
-
-		// Vector to store knn/radius matches
-		vector< vector<cv::DMatch> > descriptor_matches_complete;
-		// vector to sotre final descriptor matches
-		vector<cv::DMatch> descriptor_matches;
-		// Computes query image descriptors
-		descriptor_extractor->compute(images[i], infered_kpts, infered_descs);
-
 		// Matches and stores on 1-dimensional vector
-		bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, 40);
+		bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, matching_threshold);
 		for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
 		{
 			for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
@@ -296,23 +300,41 @@ int main( int argc, char** argv)
 			}
 		}
 
-		cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, descriptor_matches, image_matches);
+		// cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, descriptor_matches, image_matches);
 
 		// Computes and stores matching info
 		int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
 		int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
 		int num_total_matches = gt_matches.size();
 
-		cout << "-----------------------" << endl;
-		cout << "Correct matches: " << num_correct_matches << endl;
-		cout << "False matches: " << num_false_matches << endl;
-		cout << "Total matches: " << num_total_matches << endl;
-		cout << "-----------------------" << endl;
-		cout << endl << "...Press any key to continue..." << endl;
+		// cout << "-----------------------" << endl;
+		// cout << "Correct matches: " << num_correct_matches << endl;
+		// cout << "False matches: " << num_false_matches << endl;
+		// cout << "Total matches: " << num_total_matches << endl;
+		// cout << "Recall: " << num_correct_matches/(float)num_total_matches << endl;
+		// cout << "1-precision: " << (float)num_false_matches/(num_correct_matches+num_false_matches) << endl;
+		// cout << "-----------------------" << endl;
+		// cout << endl << "...Press any key to continue..." << endl;
 
-		// Show matches
-		cv::imshow( "Matches", image_matches );
-		cv::waitKey(0);
+		// Stores recall and precision on result vector
+		vector<float> image_result;
+		// 1-Precision
+		image_result.push_back(
+			(num_correct_matches == 0 && num_false_matches == 0) ? 0 :
+			(float)num_false_matches/(num_correct_matches + num_false_matches) );
+		// Recall
+		image_result.push_back( num_correct_matches/(float)num_total_matches ); 
+		results.push_back( image_result );
+
+		descriptor_matches.clear();
+		descriptor_matches_complete.clear();
+	}
+
+	ofstream result_file;
+	result_file.open("results/matching.dat");
+	for( unsigned i=0; i<results.size(); ++i )
+	{
+		result_file << results[i][0] << "\t" << results[i][1] << endl;
 	}
 
 	// cv::imshow( "Test Image 0", images[0] );
