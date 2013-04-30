@@ -181,7 +181,7 @@ const int computeFalseMatches( const vector<cv::DMatch>& err,  const vector<cv::
 		for( unsigned j=0; j<gt.size(); ++j )
 		{
 			// If there is an equal match, increment false matches
-			if(err_match.trainIdx == gt[j].trainIdx && err_match.queryIdx != gt[j].queryIdx )
+			if( err_match.trainIdx == gt[j].trainIdx && err_match.queryIdx != gt[j].queryIdx )
 			{
 				false_matches++;
 			}
@@ -237,6 +237,8 @@ int main( int argc, char** argv)
 	// OBS.: Smart pointers are used in order to easily exchange the descriptor/detector type
 	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::BRISK();
 	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::BRISK();
+	// Descriptor matcher using hamming distance
+	cv::BFMatcher bf_matcher(cv::NORM_HAMMING);
 
 	// Creates keypoints/descriptors of the first image an the keypoints/descriptors
 	// of the other images
@@ -246,9 +248,6 @@ int main( int argc, char** argv)
 	//Detects keypoints and extracts its descriptors from the first image
 	feature_detector->detect(images[0], first_kpts);
 	descriptor_extractor->compute(images[0], first_kpts, first_descs);
-
-	// Descriptor matcher using hamming distance
-	cv::BFMatcher bf_matcher(cv::NORM_HAMMING);
 
 	vector< vector<float> > results;
 
@@ -288,8 +287,9 @@ int main( int argc, char** argv)
 	descriptor_extractor->compute(images[3], infered_kpts, infered_descs);
 
 	// Generate results with different thresholds for matching
-	for( int matching_threshold = 2; matching_threshold < 100; ++matching_threshold )
+	for( int matching_threshold = 2; matching_threshold < 256; ++matching_threshold )
 	{
+		cout << matching_threshold << endl;
 		// Matches and stores on 1-dimensional vector
 		bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, matching_threshold);
 		for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
@@ -299,8 +299,6 @@ int main( int argc, char** argv)
 				descriptor_matches.push_back(descriptor_matches_complete[j][k]);
 			}
 		}
-
-		// cv::drawMatches(images[0], first_kpts, images[i], infered_kpts, descriptor_matches, image_matches);
 
 		// Computes and stores matching info
 		int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
