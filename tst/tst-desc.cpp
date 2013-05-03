@@ -28,10 +28,32 @@
 
 #include "opencv2/opencv.hpp"
 
+ // For ellipse overlapping area
+#include "program_constants.h"
+
 using namespace std;
 
 // Minimum distance between the found keypoint and its transformation
 const float dist_tolerance = 2.0f;
+
+// struct EllipseInfo
+// {
+// 	EllipseInfo( cv::Point2f _center, cv::Point2f _xAxis, cv::Point2f _yAxis)
+// 	{
+// 		this->center = _center;
+// 		this->xAxis = _xAxis;
+// 		this->yAxis = _yAxis;
+// 	}
+
+// 	cv::Point2f center;
+// 	cv::Point2f xAxis;
+// 	cv::Point2f yAxis;
+// };
+
+double ellipse_ellipse_overlap( double PHI_1, double A1, double B1, 
+                                double H1, double K1, double PHI_2, 
+                                double A2, double B2, double H2, double K2, 
+                                int *rtnCode );
 
 /*!
  * Converts int to string
@@ -137,6 +159,39 @@ void distanceMatching(
 }
 
 /*!
+ * Draws kpts with its actual size on given image
+ * \param img image where points will be drawn
+ * \param kpts Key points to be drawn on image
+ */
+void drawSizedKeyPoints( cv::Mat& img, std::vector<cv::KeyPoint> kpts )
+{
+	for( unsigned i=0; i < kpts.size(); ++i )
+	{
+		cv::ellipse( img, kpts[i].pt, cv::Size(kpts[i].size, kpts[i].size), 0, 0, 360, cv::Scalar(0,255,0));
+	}
+}
+
+/*!
+ * Generates ellipse information for a given set of kpts
+ * \param kpts Key points used to create ellipse information.
+ * Actually, will be circles, but this structure will be rearranged
+ * into ellipses, further.
+ * \param ellipse Result of generation
+ */
+ // void generateEllipsesInfoVector(
+ // 	const std::vector<cv::KeyPoint>& ktps,
+ // 	std::vector<EllipseInfo>& ellipses )
+ // {
+ // 	ellipses.resize( kpts.size() );
+ // 	for( unsigned i=0; i < kpts.size(); ++i )
+ // 	{
+ // 		ellipses[i].x = kpts.pt.x;
+ // 		ellipses[i].y = kpts.pt.y;
+ // 		ellipses[i].y = kpts.pt.y;
+ // 	}
+ // }
+
+/*!
  * Computes number of correct matches in err from a ground truth gt
  * \param err Matching set being tested
  * \param gt Ground truth matching set
@@ -235,10 +290,13 @@ int main( int argc, char** argv)
 
 	// Creates feature detector and descriptors
 	// OBS.: Smart pointers are used in order to easily exchange the descriptor/detector type
-	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::BRISK();
-	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::BRISK();
+	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::ORB();
+	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB();
 	// Descriptor matcher using hamming distance
-	cv::BFMatcher bf_matcher(cv::NORM_HAMMING);
+	cv::Ptr<cv::DescriptorMatcher> bf_matcher = new cv::BFMatcher (cv::NORM_HAMMING);
+
+	// Generic Descriptor Matcher for evaluation
+	cv::Ptr<cv::GenericDescriptorMatcher> generic_matcher = new cv::VectorDescriptorMatcher( descriptor_extractor, bf_matcher );
 
 	// Creates keypoints/descriptors of the first image an the keypoints/descriptors
 	// of the other images
@@ -249,14 +307,18 @@ int main( int argc, char** argv)
 	feature_detector->detect(images[0], first_kpts);
 	descriptor_extractor->compute(images[0], first_kpts, first_descs);
 
-	vector< vector<float> > results;
+	drawSizedKeyPoints(images[0], first_kpts);
+	cv::imshow("Original Image kpts", images[0]);
+	cv::waitKey();
+
+	vector< cv::Point2f > results;
 
 	// Generates homography file name
 	string homography_file = test_folder + "H1to" + toString(4) + "p";
 	cout << homography_file << endl;
 
 	//Creates homography matrix from file
-	cv::Mat homography = matFromFile( homography_file );
+	const cv::Mat homography = matFromFile( homography_file );
 
 	//Creates point2f vectors for all images
 	vector<cv::Point2f> first_points, infered_points, pts_from_kpts;
@@ -273,7 +335,7 @@ int main( int argc, char** argv)
 	// Since infered_points and first_points have the same size and index
 	// correspondence, the resulting matches can be used to associate image1
 	// points to the other image points. 
-	distanceMatching( infered_kpts, infered_points, gt_matches );
+	// distanceMatching( infered_kpts, infered_points, gt_matches );
 
 	//Draw matches
 	cv::Mat image_matches; // Image containing matches
@@ -286,53 +348,66 @@ int main( int argc, char** argv)
 	// Computes query image descriptors
 	descriptor_extractor->compute(images[3], infered_kpts, infered_descs);
 
-	// Generate results with different thresholds for matching
-	for( int matching_threshold = 2; matching_threshold < 256; ++matching_threshold )
-	{
-		cout << matching_threshold << endl;
-		// Matches and stores on 1-dimensional vector
-		bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, matching_threshold);
-		for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
-		{
-			for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
-			{
-				descriptor_matches.push_back(descriptor_matches_complete[j][k]);
-			}
-		}
+	cv::evaluateGenericDescriptorMatcher(
+		images[0],
+		images[3],
+		homography,
+		first_kpts,
+		infered_kpts,
+		0,
+		0,
+		results,
+		generic_matcher);
 
-		// Computes and stores matching info
-		int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
-		int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
-		int num_total_matches = gt_matches.size();
+	// cv::evaluateGenericDescriptorMatcher();
 
-		// cout << "-----------------------" << endl;
-		// cout << "Correct matches: " << num_correct_matches << endl;
-		// cout << "False matches: " << num_false_matches << endl;
-		// cout << "Total matches: " << num_total_matches << endl;
-		// cout << "Recall: " << num_correct_matches/(float)num_total_matches << endl;
-		// cout << "1-precision: " << (float)num_false_matches/(num_correct_matches+num_false_matches) << endl;
-		// cout << "-----------------------" << endl;
-		// cout << endl << "...Press any key to continue..." << endl;
+	// // Generate results with different thresholds for matching
+	// for( int matching_threshold = 2; matching_threshold < 256; ++matching_threshold )
+	// {
+	// 	cout << matching_threshold << endl;
+	// 	// Matches and stores on 1-dimensional vector
+	// 	bf_matcher.radiusMatch(first_descs, infered_descs, descriptor_matches_complete, matching_threshold);
+	// 	for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
+	// 	{
+	// 		for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
+	// 		{
+	// 			descriptor_matches.push_back(descriptor_matches_complete[j][k]);
+	// 		}
+	// 	}
 
-		// Stores recall and precision on result vector
-		vector<float> image_result;
-		// 1-Precision
-		image_result.push_back(
-			(num_correct_matches == 0 && num_false_matches == 0) ? 0 :
-			(float)num_false_matches/(num_correct_matches + num_false_matches) );
-		// Recall
-		image_result.push_back( num_correct_matches/(float)num_total_matches ); 
-		results.push_back( image_result );
+	// 	// Computes and stores matching info
+	// 	int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
+	// 	int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
+	// 	int num_total_matches = gt_matches.size();
 
-		descriptor_matches.clear();
-		descriptor_matches_complete.clear();
-	}
+	// 	// cout << "-----------------------" << endl;
+	// 	// cout << "Correct matches: " << num_correct_matches << endl;
+	// 	// cout << "False matches: " << num_false_matches << endl;
+	// 	// cout << "Total matches: " << num_total_matches << endl;
+	// 	// cout << "Recall: " << num_correct_matches/(float)num_total_matches << endl;
+	// 	// cout << "1-precision: " << (float)num_false_matches/(num_correct_matches+num_false_matches) << endl;
+	// 	// cout << "-----------------------" << endl;
+	// 	// cout << endl << "...Press any key to continue..." << endl;
+
+	// 	// Stores recall and precision on result vector
+	// 	vector<float> image_result;
+	// 	// 1-Precision
+	// 	image_result.push_back(
+	// 		(num_correct_matches == 0 && num_false_matches == 0) ? 0 :
+	// 		(float)num_false_matches/(num_correct_matches + num_false_matches) );
+	// 	// Recall
+	// 	image_result.push_back( num_correct_matches/(float)num_total_matches ); 
+	// 	results.push_back( image_result );
+
+	// 	descriptor_matches.clear();
+	// 	descriptor_matches_complete.clear();
+	// }
 
 	ofstream result_file;
 	result_file.open("results/matching.dat");
 	for( unsigned i=0; i<results.size(); ++i )
 	{
-		result_file << results[i][0] << "\t" << results[i][1] << endl;
+		result_file << results[i].x << "\t" << results[i].y << endl;
 	}
 
 	// cv::imshow( "Test Image 0", images[0] );
