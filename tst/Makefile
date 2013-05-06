@@ -17,7 +17,7 @@ LS = -ldescriptor
 INCLUDES = -I../desc
 
 all: tst-desc.cpp
-	$(CC) tst-desc.cpp ellipse_ellipse_overlap.c -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv tst-desc ../bin/
 	
 clean:
