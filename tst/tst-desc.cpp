@@ -389,8 +389,8 @@ int main( int argc, char** argv)
 
 	// Creates feature detector and descriptors
 	// OBS.: Smart pointers are used in order to easily exchange the descriptor/detector type
-	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::ORB();
-	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB();
+	cv::Ptr<cv::FeatureDetector> feature_detector = new cv::BRISK();
+	cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::FREAK();
 	// Descriptor matcher using hamming distance
 	cv::Ptr<cv::DescriptorMatcher> bf_matcher = new cv::BFMatcher (cv::NORM_HAMMING);
 
@@ -410,7 +410,7 @@ int main( int argc, char** argv)
 	cv::imshow("Original Image kpts", images[0]);
 	cv::waitKey();
 
-	std::vector< std::vector<float> > results;
+	std::vector< cv::Point2f > results;
 
 	// Generates homography file name
 	string homography_file = test_folder + "H1to" + toString(4) + "p";
@@ -427,10 +427,10 @@ int main( int argc, char** argv)
 	computeGroundTruth( first_kpts, infered_kpts, homography, images[3], gt_matches );
 
 	//Draw matches
-	cv::Mat image_matches; // Image containing matches
-	cv::drawMatches(images[3], infered_kpts, images[0], first_kpts, gt_matches, image_matches);
-	cv::imshow("GT Matches", image_matches);
-	cv::waitKey();
+	// cv::Mat image_matches; // Image containing matches
+	// cv::drawMatches(images[3], infered_kpts, images[0], first_kpts, gt_matches, image_matches);
+	// cv::imshow("GT Matches", image_matches);
+	// cv::waitKey();
 
 	// Vector to store knn/radius matches
 	vector< vector<cv::DMatch> > descriptor_matches_complete;
@@ -439,56 +439,63 @@ int main( int argc, char** argv)
 	// Computes query image descriptors
 	descriptor_extractor->compute(images[3], infered_kpts, infered_descs);
 
+	cv::evaluateGenericDescriptorMatcher(
+		images[0], images[3],
+		homography,
+		first_kpts, infered_kpts,
+		0, 0,
+		results, generic_matcher);
+
 	// Generate results with different thresholds for matching
-	for( int matching_threshold = 2; matching_threshold < 150; ++matching_threshold )
-	{
-		cout << matching_threshold << endl;
-		// Matches and stores on 1-dimensional vector
-		bf_matcher->radiusMatch( infered_descs, first_descs, descriptor_matches_complete, matching_threshold );
-		for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
-		{
-			for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
-			{
-				descriptor_matches.push_back(descriptor_matches_complete[j][k]);
-			}
-		}
-		// cv::drawMatches(images[3], infered_kpts, images[0], first_kpts, descriptor_matches, image_matches);
-		// cv::imshow("GT Matches", image_matches);
-		// cv::waitKey();
+	// for( int matching_threshold = 2; matching_threshold < 100; ++matching_threshold )
+	// {
+	// 	cout << matching_threshold << endl;
+	// 	// Matches and stores on 1-dimensional vector
+	// 	bf_matcher->radiusMatch( infered_descs, first_descs, descriptor_matches_complete, matching_threshold );
+	// 	for( unsigned j=0; j<descriptor_matches_complete.size(); ++j )
+	// 	{
+	// 		for( unsigned k=0; k<descriptor_matches_complete[j].size(); ++k )
+	// 		{
+	// 			descriptor_matches.push_back(descriptor_matches_complete[j][k]);
+	// 		}
+	// 	}
+	// 	// cv::drawMatches(images[3], infered_kpts, images[0], first_kpts, descriptor_matches, image_matches);
+	// 	// cv::imshow("GT Matches", image_matches);
+	// 	// cv::waitKey();
 
-		// Computes and stores matching info
-		int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
-		int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
-		int num_total_matches = gt_matches.size();
+	// 	// Computes and stores matching info
+	// 	int num_correct_matches = computeCorrectMatches( descriptor_matches, gt_matches );
+	// 	int num_false_matches = computeFalseMatches( descriptor_matches, gt_matches );
+	// 	int num_total_matches = gt_matches.size();
 
-		cout << "-----------------------" << endl;
-		cout << "Correct matches: " << num_correct_matches << endl;
-		cout << "False matches: " << num_false_matches << endl;
-		cout << "Total matches: " << num_total_matches << endl;
-		cout << "Recall: " << num_correct_matches/(float)num_total_matches << endl;
-		cout << "1-precision: " << (float)num_false_matches/(num_correct_matches+num_false_matches) << endl;
-		cout << "-----------------------" << endl;
-		cout << endl << "...Press any key to continue..." << endl;
+	// 	cout << "-----------------------" << endl;
+	// 	cout << "Correct matches: " << num_correct_matches << endl;
+	// 	cout << "False matches: " << num_false_matches << endl;
+	// 	cout << "Total matches: " << num_total_matches << endl;
+	// 	cout << "Recall: " << num_correct_matches/(float)num_total_matches << endl;
+	// 	cout << "1-precision: " << (float)num_false_matches/(num_correct_matches+num_false_matches) << endl;
+	// 	cout << "-----------------------" << endl;
+	// 	cout << endl << "...Press any key to continue..." << endl;
 
-		// Stores recall and precision on result vector
-		vector<float> image_result;
-		// 1-Precision
-		image_result.push_back(
-			(num_correct_matches == 0 && num_false_matches == 0) ? 0 :
-			(float)num_false_matches/(num_correct_matches + num_false_matches) );
-		// Recall
-		image_result.push_back( num_correct_matches/(float)num_total_matches ); 
-		results.push_back( image_result );
+	// 	// Stores recall and precision on result vector
+	// 	vector<float> image_result;
+	// 	// 1-Precision
+	// 	image_result.push_back(
+	// 		(num_correct_matches == 0 && num_false_matches == 0) ? 0 :
+	// 		(float)num_false_matches/(num_correct_matches + num_false_matches) );
+	// 	// Recall
+	// 	image_result.push_back( num_correct_matches/(float)num_total_matches ); 
+	// 	results.push_back( image_result );
 
-		descriptor_matches.clear();
-		descriptor_matches_complete.clear();
-	}
+	// 	descriptor_matches.clear();
+	// 	descriptor_matches_complete.clear();
+	// }
 
 	ofstream result_file;
 	result_file.open("results/matching.dat");
 	for( unsigned i=0; i<results.size(); ++i )
 	{
-		result_file << results[i][0] << "  " << results[i][1] << endl;
+		result_file << results[i].x << "  " << results[i].y << endl;
 	}
 
 	// cv::imshow( "Test Image 0", images[0] );
