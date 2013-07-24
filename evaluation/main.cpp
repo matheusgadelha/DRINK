@@ -1,6 +1,7 @@
 
 #include "ImageTransformation.hpp"
 #include "AlgorithmEstimation.hpp"
+#include "FeatureAlgorithm.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/nonfree/features2d.hpp>
@@ -20,22 +21,18 @@ int main(int argc, const char* argv[])
 
     // Initialize list of algorithm tuples:
        
-    algorithms.push_back(FeatureAlgorithm("KAZE",
-        new cv::KAZE(),
-        new cv::FlannBasedMatcher()));
-
-    algorithms.push_back(FeatureAlgorithm("BRISK",
-        new cv::BRISK(60,4),
-        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+    // algorithms.push_back(FeatureAlgorithm("BRISK",
+    //     new cv::BRISK(60,4),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     algorithms.push_back(FeatureAlgorithm("ORB",
         new cv::ORB(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
     
-    algorithms.push_back(FeatureAlgorithm("FREAK",
-        new cv::SurfFeatureDetector(),
-        new cv::FREAK(),
-        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+    // algorithms.push_back(FeatureAlgorithm("FREAK",
+    //     new cv::SurfFeatureDetector(),
+    //     new cv::FREAK(),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     /*
     algorithms.push_back(FeatureAlgorithm("SURF+BRISK",
