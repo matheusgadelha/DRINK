@@ -22,13 +22,14 @@ namespace cv{
 
 		   	static void init( int _numBits = 2, int _ringSize=8, int _numRings = 5 );
 
-		    virtual void read( const FileNode& );
-		    virtual void write( FileStorage& ) const;
+		    // virtual void read( const FileNode& );
+		    // virtual void write( FileStorage& ) const;
 
 		    virtual int descriptorSize() const;
 		    virtual int descriptorType() const;
 
 		    static Point2i* geometryData;
+		    static std::vector< std::bitset<16> > results;
 
 		    static int numBits;
 		    static int ringSize;
@@ -44,6 +45,7 @@ namespace cv{
 		    typedef void(*PixelTestFn)(const Mat&, const vector<KeyPoint>&, Mat&);
 
 		    static void generateGeometry();
+		    static void generateResults();
 
 		    PixelTestFn test_fn_;
 

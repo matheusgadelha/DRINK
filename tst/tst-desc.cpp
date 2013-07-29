@@ -56,6 +56,21 @@ int main( int argc, char* argv[])
 {
 	Descriptor::init();
 
+	if( argc < 2)
+		cout << "ERROR: No image path passed as argument.\n";
+
+	const char * img_path = argv[1];
+
+	cv::Mat img = imread( img_path );
+	Ptr<FeatureDetector> fd = new ORB();
+	Ptr<DescriptorExtractor> de = new Descriptor();
+
+	vector<KeyPoint> kps;
+	cv::Mat descs;
+
+	fd->detect( img, kps );
+	de->compute( img, kps, descs );
+
 	unsigned char c = 42;
 	bitset<8> a(c);
 

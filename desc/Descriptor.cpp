@@ -1,5 +1,17 @@
 #include "Descriptor.hpp"
 
+inline 
+unsigned char valueAt( const cv::KeyPoint& kp, cv::Point2i p , cv::Mat& img )
+{
+	return img.at<unsigned char>( p.y + kp.pt.y, p.x + kp.pt.x );
+}
+
+inline
+unsigned char valueAtCenter( const cv::KeyPoint& kp, cv::Mat& img )
+{
+	return img.at<unsigned char>( kp.pt.y, kp.pt.x );
+}
+
 namespace cv{
 
 	int Descriptor::numBits;
@@ -11,6 +23,10 @@ namespace cv{
 	const int Descriptor::kernelSize;
 
 	Point2i* Descriptor::geometryData;
+	std::vector< std::bitset<16> > Descriptor::results;
+
+	Descriptor::Descriptor()
+	{ }
 
 	void Descriptor::init( int _numBits, int _ringSize, int _numRings )
 	{
@@ -20,6 +36,7 @@ namespace cv{
 
 		geometryData = new Point2i[ringSize*numRings];
 		generateGeometry();
+		generateResults();
 	}
 
 	void Descriptor::generateGeometry()
@@ -37,6 +54,27 @@ namespace cv{
 		}
 	}
 
+	void Descriptor::generateResults()
+	{
+		for(int i=0; i<17; ++i)
+		{
+			int value = 0;
+			for( int j=0; j<i; ++j ) value += pow(2,j);
+			results.push_back(std::bitset<16>(value));
+		}
+	}
+
+	int Descriptor::descriptorSize() const
+	{
+		const int descriptor_type_size = 8/(float)numBits*ringSize*numRings;
+		return descriptor_type_size;
+	}
+
+	int Descriptor::descriptorType() const
+	{
+		return CV_8UC1;
+	}
+
 	void Descriptor::computeImpl(const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors) const
 	{
 		// Construct integral image for fast smoothing (box filter)
@@ -49,17 +87,20 @@ namespace cv{
 
 	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
 
-	    const int descriptor
-    	descriptors = Mat::zeros((int)keypoints.size(), numBits*ringSize*numRings, CV_8U);
+	    const int descriptor_type_size = 8/(float)numBits*ringSize*numRings;
+    	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
 
-	    for (int i_kp = 0; i_kp < (int)keypoints.size(); ++i_kp)
+	    for (unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp)
 	    {
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
-	        for( int i = 0; i < keypoints.size(); ++i )
-	        {
+	        unsigned char center = valueAtCenter( pt, grayImage );
+	        std::cout << (int)center << std::endl;
 
+	        for( int i = 0; i < ringSize*numRings; ++i )
+	        {
+	        	unsigned char cpoint = valueAt( pt, geometryData[i], grayImage );
 	        }
 	    }	
 	}
