@@ -8,6 +8,7 @@ namespace cv{
 
 	const int Descriptor::firstRadius;
 	const int Descriptor::radiusStep;
+	const int Descriptor::kernelSize;
 
 	Point2i* Descriptor::geometryData;
 
@@ -38,6 +39,28 @@ namespace cv{
 
 	void Descriptor::computeImpl(const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors) const
 	{
-		
+		// Construct integral image for fast smoothing (box filter)
+	    Mat sum;
+
+	    Mat grayImage = image;
+	    if( image.type() != CV_8U ) cvtColor( image, grayImage, CV_BGR2GRAY );
+
+	    // integral( grayImage, sum, CV_32S);
+
+	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
+
+	    const int descriptor
+    	descriptors = Mat::zeros((int)keypoints.size(), numBits*ringSize*numRings, CV_8U);
+
+	    for (int i_kp = 0; i_kp < (int)keypoints.size(); ++i_kp)
+	    {
+	        uchar* desc = descriptors.ptr(i_kp);
+	        const KeyPoint& pt = keypoints[i_kp];
+
+	        for( int i = 0; i < keypoints.size(); ++i )
+	        {
+
+	        }
+	    }	
 	}
 }

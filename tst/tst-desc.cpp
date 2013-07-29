@@ -56,11 +56,12 @@ int main( int argc, char* argv[])
 {
 	Descriptor::init();
 
-	unsigned char c = 47;
+	unsigned char c = 42;
 	bitset<8> a(c);
 
-	cout << (a) << endl;
-	cout << (a>>2) << endl;
+	cout << (a >>= 1) << endl;
+	c = a.to_ulong();
+	cout << (int)c << endl;
 
 	// showDescriptorGeometry();
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <bitset>
 
 #include "opencv2/opencv.hpp"
 
@@ -34,7 +35,8 @@ namespace cv{
 		    static int numRings;
 
 		    static const int firstRadius = 5;
-		    static const int radiusStep = 3;
+		    static const int radiusStep = 5;
+		    static const int kernelSize = 5;
 
 		protected:
 		    virtual void computeImpl(const Mat& image, vector<KeyPoint>& keypoints, Mat& descriptors) const;
