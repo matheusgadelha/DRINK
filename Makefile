@@ -10,13 +10,9 @@ OPENCV_SO = /usr/local/lib/libopencv_calib3d.so /usr/local/lib/libopencv_contrib
 
 OPENCV = $(OPENCV_LS) $(OPENCV_INCLUDES)
 
-all: Descriptor.o
-	ar rvs libdescriptor.a Descriptor.o
-	ranlib libdescriptor.a
-	mv libdescriptor.a ../lib/
-
-Descriptor.o: Descriptor.cpp
-	$(CC) Descriptor.cpp -c $(CFLAGS) $(OPENCV)
+all: tst-desc.cpp
+	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv tst-desc ../bin/
 	
 clean:
-	rm -r *.o
+	cd .
