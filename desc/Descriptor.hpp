@@ -8,6 +8,7 @@
 
 #include "opencv2/opencv.hpp"
 
+#define RBITS 16
 #define PI 3.1415f
 
 namespace cv{
@@ -20,7 +21,7 @@ namespace cv{
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
 		   	Descriptor();
 
-		   	static void init( int _numBits = 2, int _ringSize=8, int _numRings = 5 );
+		   	static void init( int _numBits = 8, int _ringSize=8, int _numRings = 5 );
 
 		    // virtual void read( const FileNode& );
 		    // virtual void write( FileStorage& ) const;
@@ -29,7 +30,7 @@ namespace cv{
 		    virtual int descriptorType() const;
 
 		    static Point2i* geometryData;
-		    static std::vector< std::bitset<16> > results;
+		    static std::vector< std::bitset<RBITS> > results;
 
 		    static int numBits;
 		    static int ringSize;

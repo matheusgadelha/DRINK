@@ -56,28 +56,52 @@ int main( int argc, char* argv[])
 {
 	Descriptor::init();
 
-	if( argc < 2)
+	if( argc < 23)
 		cout << "ERROR: No image path passed as argument.\n";
 
-	const char * img_path = argv[1];
+	const char * img_path1 = argv[1];
+	const char * img_path2 = argv[2];
 
-	cv::Mat img = imread( img_path );
+	cv::Mat img1 = imread( img_path1 );
+	cv::Mat img2 = imread( img_path2 );
+
 	Ptr<FeatureDetector> fd = new ORB();
 	Ptr<DescriptorExtractor> de = new Descriptor();
+	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
-	vector<KeyPoint> kps;
-	cv::Mat descs;
+	vector<KeyPoint> kps1;
+	cv::Mat descs1;
 
-	fd->detect( img, kps );
-	de->compute( img, kps, descs );
+	vector<KeyPoint> kps2;
+	cv::Mat descs2;
 
-	unsigned char c = 42;
-	bitset<8> a(c);
+	vector<DMatch> matches;
 
-	cout << (a >>= 1) << endl;
-	c = a.to_ulong();
-	cout << (int)c << endl;
+	fd->detect( img1, kps1 );
+	de->compute( img1, kps1, descs1);
 
+	fd->detect( img2, kps2 );
+	de->compute( img2, kps2, descs2);
+
+	dm->match(descs1, descs2, matches);
+
+	Mat img_matches;
+	drawMatches
+    (
+       	img1, 
+        kps1, 
+        img2, 
+        kps2,
+        matches, 
+        img_matches, 
+        cv::Scalar(0,200,0,255), 
+        cv::Scalar::all(-1),
+        std::vector<char>(), 
+        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+    );
+
+    imshow("Matches", img_matches);
+	waitKey();
 	// showDescriptorGeometry();
 
 	return 0;

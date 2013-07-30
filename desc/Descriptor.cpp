@@ -56,11 +56,11 @@ namespace cv{
 
 	void Descriptor::generateResults()
 	{
-		for(int i=0; i<17; ++i)
+		for(int i=0; i<RBITS+1; ++i)
 		{
 			int value = 0;
 			for( int j=0; j<i; ++j ) value += pow(2,j);
-			results.push_back(std::bitset<16>(value));
+			results.push_back(std::bitset<RBITS>(value));
 		}
 	}
 
@@ -90,18 +90,59 @@ namespace cv{
 	    const int descriptor_type_size = 8/(float)numBits*ringSize*numRings;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
 
+    	const unsigned char step = 510/numBits;
+    	const unsigned char r_possibilities = numBits+1;
+
+    	int byte_pos = 0;
+
 	    for (unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp)
 	    {
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
 	        unsigned char center = valueAtCenter( pt, grayImage );
-	        std::cout << (int)center << std::endl;
+
+	        int bit_count = 0;
+	        int inserted_chars = 0;
+	        unsigned char val = 0;
 
 	        for( int i = 0; i < ringSize*numRings; ++i )
 	        {
+	        	if( bit_count == 8 )
+	        	{
+	        		// std::cout << std::bitset<8>(desc[inserted_chars]) << std::endl;
+	        		inserted_chars++;
+	        		bit_count = 0;
+	        	}
+
 	        	unsigned char cpoint = valueAt( pt, geometryData[i], grayImage );
+	        	unsigned char raw_value = 0;
+	        	unsigned char diff = 0;
+
+	        	if( center > cpoint ){ //center - cpoint is positive
+	        		diff = center - cpoint;
+	        		raw_value = results[r_possibilities/2 + diff/step].to_ulong();
+	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
+	        	}
+	        	else // center - cpoint is negative
+	        	{
+	        		diff = cpoint - center;
+	        		raw_value = results[r_possibilities/2 - diff/step].to_ulong();
+	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
+	        	}
+
+	        	bit_count += numBits;
+
+	        	desc[inserted_chars] += (raw_value << (8-bit_count));
 	        }
+
+	        // std::cout << "INSERTED CHARS:" << inserted_chars+1 << std::endl;
+
+	        // for( int i=0; i < descriptor_type_size; ++i )
+	        // {
+	        // 	std::cout << std::bitset<8>(desc[i]);
+	        // }
+	        // std::cout << std::endl;
 	    }	
 	}
 }
