@@ -66,7 +66,7 @@ namespace cv{
 
 	int Descriptor::descriptorSize() const
 	{
-		const int descriptor_type_size = 8/(float)numBits*ringSize*numRings;
+		const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
 		return descriptor_type_size;
 	}
 
@@ -87,7 +87,7 @@ namespace cv{
 
 	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
 
-	    const int descriptor_type_size = 8/(float)numBits*ringSize*numRings;
+	    const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
 
     	const unsigned char step = 510/numBits;
@@ -138,11 +138,12 @@ namespace cv{
 
 	        // std::cout << "INSERTED CHARS:" << inserted_chars+1 << std::endl;
 
-	        // for( int i=0; i < descriptor_type_size; ++i )
-	        // {
-	        // 	std::cout << std::bitset<8>(desc[i]);
-	        // }
-	        // std::cout << std::endl;
+	        for( int i=0; i < descriptor_type_size; ++i )
+	        {
+	        	// std::cout << std::bitset<8>(desc[i]);
+	        	std::cout << (int)desc[i] << " ";
+	        }
+	        std::cout << std::endl;
 	    }	
 	}
 }
