@@ -2,6 +2,7 @@
 #include "ImageTransformation.hpp"
 #include "AlgorithmEstimation.hpp"
 #include "FeatureAlgorithm.hpp"
+#include "Descriptor.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/nonfree/features2d.hpp>
@@ -10,10 +11,12 @@
 #include <fstream>
 
 
-const bool USE_VERBOSE_TRANSFORMATIONS = false;
+const bool USE_VERBOSE_TRANSFORMATIONS = true;
 
 int main(int argc, const char* argv[])
 {
+    cv::Descriptor::init();
+    
     std::vector<FeatureAlgorithm>              algorithms;
     std::vector<cv::Ptr<ImageTransformation> > transformations;
 
@@ -25,8 +28,14 @@ int main(int argc, const char* argv[])
     //     new cv::BRISK(60,4),
     //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("ORB",
-        new cv::ORB(),
+    algorithms.push_back(FeatureAlgorithm("BRIEF",
+        new cv::FastFeatureDetector(),
+        new cv::BriefDescriptorExtractor(),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    algorithms.push_back(FeatureAlgorithm("DRINK",
+        new cv::FastFeatureDetector(),
+        new cv::Descriptor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
     
     // algorithms.push_back(FeatureAlgorithm("FREAK",

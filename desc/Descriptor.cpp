@@ -89,9 +89,9 @@ namespace cv{
 
 	    const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
-
-    	const unsigned char step = 510/numBits;
+    	
     	const unsigned char r_possibilities = numBits+1;
+    	const unsigned char step = 510/r_possibilities;
 
     	int byte_pos = 0;
 
@@ -138,12 +138,12 @@ namespace cv{
 
 	        // std::cout << "INSERTED CHARS:" << inserted_chars+1 << std::endl;
 
-	        for( int i=0; i < descriptor_type_size; ++i )
-	        {
-	        	// std::cout << std::bitset<8>(desc[i]);
-	        	std::cout << (int)desc[i] << " ";
-	        }
-	        std::cout << std::endl;
+	        // for( int i=0; i < descriptor_type_size; ++i )
+	        // {
+	        // 	// std::cout << std::bitset<8>(desc[i]);
+	        // 	std::cout << (int)desc[i] << " ";
+	        // }
+	        // std::cout << std::endl;
 	    }	
 	}
 }

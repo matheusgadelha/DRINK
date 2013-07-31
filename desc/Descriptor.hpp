@@ -21,7 +21,7 @@ namespace cv{
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
 		   	Descriptor();
 
-		   	static void init( int _numBits = 8, int _ringSize=8, int _numRings = 2 );
+		   	static void init( int _numBits = 4, int _ringSize=8, int _numRings = 5 );
 
 		    // virtual void read( const FileNode& );
 		    // virtual void write( FileStorage& ) const;
