@@ -21,7 +21,7 @@ namespace cv{
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
 		   	Descriptor();
 
-		   	static void init( int _numBits = 4, int _ringSize=8, int _numRings = 5 );
+		   	static void init( int _numBits = 2, int _ringSize=8, int _numRings = 5 );
 
 		    // virtual void read( const FileNode& );
 		    // virtual void write( FileStorage& ) const;
@@ -31,6 +31,9 @@ namespace cv{
 
 		    static Point2i* geometryData;
 		    static std::vector< std::bitset<RBITS> > results;
+		    static std::vector< std::bitset<RBITS> > positiveBin;
+		    static std::vector< std::bitset<RBITS> > negativeBin;
+		    static std::vector< int > result_statistics;
 
 		    static int numBits;
 		    static int ringSize;
@@ -47,6 +50,7 @@ namespace cv{
 
 		    static void generateGeometry();
 		    static void generateResults();
+		    static void increaseStatistics( std::bitset<RBITS> r );
 
 		    PixelTestFn test_fn_;
 

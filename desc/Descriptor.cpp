@@ -24,6 +24,9 @@ namespace cv{
 
 	Point2i* Descriptor::geometryData;
 	std::vector< std::bitset<16> > Descriptor::results;
+	std::vector< std::bitset<16> > Descriptor::positiveBin;
+	std::vector< std::bitset<16> > Descriptor::negativeBin;
+	std::vector< int > Descriptor::result_statistics;
 
 	Descriptor::Descriptor()
 	{ }
@@ -61,6 +64,24 @@ namespace cv{
 			int value = 0;
 			for( int j=0; j<i; ++j ) value += pow(2,j);
 			results.push_back(std::bitset<RBITS>(value));
+			result_statistics.push_back(0);
+		}
+
+		float t = 127 / numBits;
+
+		for( int i=0; i<126; ++i )
+		{
+			std::cout << (i/(int)t);
+			positiveBin.push_back( results[ (i/(int)t) + (numBits/2) ] );
+			negativeBin.push_back( results[ (numBits/2) - (i/(int)t) ] );
+		}
+	}
+
+	void Descriptor::increaseStatistics( std::bitset<RBITS> r )
+	{
+		for( int i = 0; i < results.size(); ++i )
+		{
+			if( results[i] == r) result_statistics[i]++;
 		}
 	}
 
@@ -75,7 +96,7 @@ namespace cv{
 		return CV_8UC1;
 	}
 
-	void Descriptor::computeImpl(const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors) const
+	void Descriptor::computeImpl( const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors ) const
 	{
 		// Construct integral image for fast smoothing (box filter)
 	    Mat sum;
@@ -121,13 +142,17 @@ namespace cv{
 
 	        	if( center > cpoint ){ //center - cpoint is positive
 	        		diff = center - cpoint;
-	        		raw_value = results[r_possibilities/2 + diff/step].to_ulong();
+	        		raw_value = positiveBin[diff].to_ulong();
+	        		increaseStatistics( positiveBin[diff] );
+	        		// result_statistics[r_possibilities/2 + diff/step]++;
 	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
 	        	}
 	        	else // center - cpoint is negative
 	        	{
 	        		diff = cpoint - center;
-	        		raw_value = results[r_possibilities/2 - diff/step].to_ulong();
+	        		raw_value = negativeBin[diff].to_ulong();
+	        		increaseStatistics( negativeBin[diff] );
+	        		// result_statistics[r_possibilities/2 - diff/step]++;
 	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
 	        	}
 
@@ -140,8 +165,8 @@ namespace cv{
 
 	        // for( int i=0; i < descriptor_type_size; ++i )
 	        // {
-	        // 	// std::cout << std::bitset<8>(desc[i]);
-	        // 	std::cout << (int)desc[i] << " ";
+	        // 	std::cout << std::bitset<8>(desc[i]) << " ";
+	        // 	// std::cout << (int)desc[i] << " ";
 	        // }
 	        // std::cout << std::endl;
 	    }	

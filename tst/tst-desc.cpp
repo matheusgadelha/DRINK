@@ -100,6 +100,18 @@ int main( int argc, char* argv[])
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
 
+    std::cout << "Number of occurences per result\n";
+    for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
+    {
+    	cout << Descriptor::results[i] << ": " << Descriptor::result_statistics[i] << endl;
+    }
+
+    std::cout << "Positive Binary Values\n";
+    for( int i = 0; i < Descriptor::positiveBin.size(); ++i)
+    {
+    	cout << i << ": " << Descriptor::positiveBin[i] << endl;
+    }
+
     imshow("Matches", img_matches);
 	waitKey();
 	// showDescriptorGeometry();
