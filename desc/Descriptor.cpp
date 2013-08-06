@@ -71,7 +71,7 @@ namespace cv{
 
 		for( int i=0; i<126; ++i )
 		{
-			std::cout << (i/(int)t);
+			// std::cout << (i/(int)t);
 			positiveBin.push_back( results[ (i/(int)t) + (numBits/2) ] );
 			negativeBin.push_back( results[ (numBits/2) - (i/(int)t) ] );
 		}
