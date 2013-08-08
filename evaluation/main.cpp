@@ -11,7 +11,7 @@
 #include <fstream>
 
 
-const bool USE_VERBOSE_TRANSFORMATIONS = true;
+const bool USE_VERBOSE_TRANSFORMATIONS = false;
 
 int main(int argc, const char* argv[])
 {
@@ -33,10 +33,21 @@ int main(int argc, const char* argv[])
         new cv::BriefDescriptorExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK",
+    algorithms.push_back(FeatureAlgorithm("DRINK K5",
         new cv::FastFeatureDetector(),
-        new cv::Descriptor(),
+        new cv::Descriptor(5),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    // algorithms.push_back(FeatureAlgorithm("DRINK K7",
+    //     new cv::FastFeatureDetector(),
+    //     new cv::Descriptor(7),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    // algorithms.push_back(FeatureAlgorithm("DRINK K9",
+    //     new cv::FastFeatureDetector(),
+    //     new cv::Descriptor(9),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
     
     // algorithms.push_back(FeatureAlgorithm("FREAK",
     //     new cv::SurfFeatureDetector(),

@@ -19,9 +19,9 @@ namespace cv{
 		public:
 
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
-		   	Descriptor();
+		   	Descriptor( int _kernelSize );
 
-		   	static void init( int _numBits = 2, int _ringSize=8, int _numRings = 5 );
+		   	static void init( int _numBits = 2, int _ringSize=16, int _numRings = 8 );
 
 		    // virtual void read( const FileNode& );
 		    // virtual void write( FileStorage& ) const;
@@ -41,7 +41,7 @@ namespace cv{
 
 		    static const int firstRadius = 5;
 		    static const int radiusStep = 5;
-		    static const int kernelSize = 5;
+		    static int kernelSize;
 
 		protected:
 		    virtual void computeImpl(const Mat& image, vector<KeyPoint>& keypoints, Mat& descriptors) const;

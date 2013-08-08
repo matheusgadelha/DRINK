@@ -12,6 +12,20 @@ unsigned char valueAtCenter( const cv::KeyPoint& kp, cv::Mat& img )
 	return img.at<unsigned char>( kp.pt.y, kp.pt.x );
 }
 
+inline
+unsigned char smoothedSum(const cv::Mat& sum, const cv::KeyPoint& pt, int y, int x)
+{
+    static const int HALF_KERNEL = cv::Descriptor::kernelSize/2;
+
+    int img_y = (int)(pt.pt.y) + y;
+    int img_x = (int)(pt.pt.x) + x;
+    int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
+           - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
+           - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
+           + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
+    return (unsigned char) val;
+}
+
 namespace cv{
 
 	int Descriptor::numBits;
@@ -20,7 +34,7 @@ namespace cv{
 
 	const int Descriptor::firstRadius;
 	const int Descriptor::radiusStep;
-	const int Descriptor::kernelSize;
+	int Descriptor::kernelSize;
 
 	Point2i* Descriptor::geometryData;
 	std::vector< std::bitset<16> > Descriptor::results;
@@ -28,8 +42,10 @@ namespace cv{
 	std::vector< std::bitset<16> > Descriptor::negativeBin;
 	std::vector< int > Descriptor::result_statistics;
 
-	Descriptor::Descriptor()
-	{ }
+	Descriptor::Descriptor( int _kernelSize = 7 )
+	{
+		kernelSize = _kernelSize;
+	}
 
 	void Descriptor::init( int _numBits, int _ringSize, int _numRings )
 	{
@@ -104,7 +120,7 @@ namespace cv{
 	    Mat grayImage = image;
 	    if( image.type() != CV_8U ) cvtColor( image, grayImage, CV_BGR2GRAY );
 
-	    // integral( grayImage, sum, CV_32S);
+	    integral( grayImage, sum, CV_32S);
 
 	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
 
@@ -121,7 +137,10 @@ namespace cv{
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
-	        unsigned char center = valueAtCenter( pt, grayImage );
+	        // unsigned char center = valueAtCenter( pt, grayImage );
+	        unsigned char center = smoothedSum( sum, pt, 0, 0 );
+
+	        // std::cout << "Center: " << (int)center << std::endl << "Smoothed: " << (int)center_smoothed << std::endl;
 
 	        int bit_count = 0;
 	        int inserted_chars = 0;
@@ -136,7 +155,8 @@ namespace cv{
 	        		bit_count = 0;
 	        	}
 
-	        	unsigned char cpoint = valueAt( pt, geometryData[i], grayImage );
+	        	// unsigned char cpoint = valueAt( pt, geometryData[i], grayImage );
+	        	unsigned char cpoint = smoothedSum( sum, pt, geometryData[i].y, geometryData[i].x );
 	        	unsigned char raw_value = 0;
 	        	unsigned char diff = 0;
 
