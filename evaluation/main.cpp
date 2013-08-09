@@ -33,20 +33,35 @@ int main(int argc, const char* argv[])
         new cv::BriefDescriptorExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK B2 S8 R4 K5",
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R5 K5",
         new cv::FastFeatureDetector(),
-        new cv::Descriptor(2,8,4,5),
+        new cv::Descriptor(4,8,5,5),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K5",
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S16 R6 K5",
         new cv::FastFeatureDetector(),
-        new cv::Descriptor(4,8,4,5),
+        new cv::Descriptor(4,16,6,5),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K9",
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S16 R8 K5",
         new cv::FastFeatureDetector(),
-        new cv::Descriptor(4,8,4,9),
+        new cv::Descriptor(4,16,8,5),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    algorithms.push_back(FeatureAlgorithm("DRINK B8 S8 R5 K5",
+        new cv::FastFeatureDetector(),
+        new cv::Descriptor(8,8,5,5),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    // algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K5",
+    //     new cv::FastFeatureDetector(),
+    //     new cv::Descriptor(4,8,4,5),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    // algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K9",
+    //     new cv::FastFeatureDetector(),
+    //     new cv::Descriptor(4,8,4,9),
+    //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     // algorithms.push_back(FeatureAlgorithm("DRINK K7",
     //     new cv::FastFeatureDetector(),

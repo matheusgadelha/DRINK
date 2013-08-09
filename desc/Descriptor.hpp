@@ -31,26 +31,28 @@ namespace cv{
 
 		    Point2i* geometryData;
 		    std::vector< std::bitset<RBITS> > results;
-		    std::vector< std::bitset<RBITS> > positiveBin;
-		    std::vector< std::bitset<RBITS> > negativeBin;
-		    std::vector< int > result_statistics;
+		    std::vector< std::bitset<RBITS> > bins;
 
 		    int numBits;
 		    int ringSize;
 		    int numRings;
+		    int kernelSize;
 
+		    static std::vector< int > result_statistics;
 		    static const int firstRadius = 5;
 		    static const int radiusStep = 5;
-		    static int kernelSize;
 
 		protected:
-		    virtual void computeImpl(const Mat& image, vector<KeyPoint>& keypoints, Mat& descriptors) const;
+		    virtual void computeImpl(
+		    	const Mat& image,
+		    	vector<KeyPoint>& keypoints,
+		    	Mat& descriptors ) const;
 
-		    typedef void(*PixelTestFn)(const Mat&, const vector<KeyPoint>&, Mat&);
+		    typedef void(*PixelTestFn)( const Mat&, const vector<KeyPoint>&, Mat& );
 
 		    void generateGeometry();
 		    void generateResults();
-		    void increaseStatistics( const std::bitset<RBITS> r );
+		    void increaseStatistics( const std::bitset<RBITS> r ) const;
 
 		    PixelTestFn test_fn_;
 

@@ -64,7 +64,7 @@ int main( int argc, char* argv[])
 	cv::Mat img2 = imread( img_path2 );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,4,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -98,16 +98,16 @@ int main( int argc, char* argv[])
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
 
-    // std::cout << "Number of occurences per result\n";
-    // for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
-    // {
-    // 	cout << Descriptor::results[i] << ": " << Descriptor::result_statistics[i] << endl;
-    // }
+    std::cout << "Number of occurences per result\n";
+    for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
+    {
+    	cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
+    }
 
     // std::cout << "Positive Binary Values\n";
-    // for( int i = 0; i < Descriptor::positiveBin.size(); ++i)
+    // for( int i = 0; i < static_cast< Ptr<Descriptor> >(de)->bins.size(); ++i)
     // {
-    // 	cout << i << ": " << Descriptor::positiveBin[i] << endl;
+    // 	cout << i << ": " << static_cast< Ptr<Descriptor> >(de)->bins[i] << endl;
     // }
 
     imshow("Matches", img_matches);

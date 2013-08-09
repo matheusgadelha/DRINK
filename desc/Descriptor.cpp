@@ -13,9 +13,14 @@ unsigned char valueAtCenter( const cv::KeyPoint& kp, cv::Mat& img )
 }
 
 inline
-unsigned char smoothedSum(const cv::Mat& sum, const cv::KeyPoint& pt, int y, int x)
-{
-    static const int HALF_KERNEL = cv::Descriptor::kernelSize/2;
+unsigned char smoothedSum(
+	const cv::Mat& sum,
+	const cv::KeyPoint& pt, 
+	int y, 
+	int x, 
+	const int _kernelSize
+){
+    static const int HALF_KERNEL = _kernelSize/2;
 
     int img_y = (int)(pt.pt.y) + y;
     int img_x = (int)(pt.pt.x) + x;
@@ -28,9 +33,10 @@ unsigned char smoothedSum(const cv::Mat& sum, const cv::KeyPoint& pt, int y, int
 
 namespace cv{
 
+	std::vector< int > Descriptor::result_statistics;
+
 	const int Descriptor::firstRadius;
 	const int Descriptor::radiusStep;
-	int Descriptor::kernelSize;
 
 	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _kernelSize = 5 )
 	{
@@ -81,19 +87,16 @@ namespace cv{
 			result_statistics.push_back(0);
 		}
 
-		float t = 127 / numBits;
-
-		for( int i=0; i<126; ++i )
+		for( int i = -255; i <= 255; ++i )
 		{
-			// std::cout << (i/(int)t);
-			positiveBin.push_back( results[ (i/(int)t) + (numBits/2) ] );
-			negativeBin.push_back( results[ (numBits/2) - (i/(int)t) ] );
+			int idx = round(i*numBits/510.0f) + numBits/2;
+			bins.push_back( results[ idx ] );
 		}
 	}
 
-	void Descriptor::increaseStatistics( const std::bitset<RBITS> r )
+	void Descriptor::increaseStatistics( const std::bitset<RBITS> r ) const
 	{
-		for( int i = 0; i < results.size(); ++i )
+		for( unsigned i = 0; i < results.size(); ++i )
 		{
 			if( results[i] == r) result_statistics[i]++;
 		}
@@ -110,9 +113,12 @@ namespace cv{
 		return CV_8UC1;
 	}
 
-	void Descriptor::computeImpl( const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors ) const
+	void Descriptor::computeImpl(
+		const Mat& image,
+		std::vector<KeyPoint>& keypoints,
+		Mat& descriptors ) const
 	{
-		// Construct integral image for fast smoothing (box filter)
+
 	    Mat sum;
 
 	    Mat grayImage = image;
@@ -124,55 +130,51 @@ namespace cv{
 
 	    const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
-    	
-    	const unsigned char r_possibilities = numBits+1;
-    	const unsigned char step = 510/r_possibilities;
 
-    	int byte_pos = 0;
-
-	    for (unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp)
+	    for( unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp )
 	    {
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
-	        // unsigned char center = valueAtCenter( pt, grayImage );
-	        unsigned char center = smoothedSum( sum, pt, 0, 0 );
-
-	        // std::cout << "Center: " << (int)center << std::endl << "Smoothed: " << (int)center_smoothed << std::endl;
-
+	        unsigned char center = smoothedSum(
+				sum, 
+				pt, 
+				0, 0,
+				this->kernelSize
+	        );
+	        
 	        int bit_count = 0;
 	        int inserted_chars = 0;
-	        unsigned char val = 0;
 
 	        for( int i = 0; i < ringSize*numRings; ++i )
 	        {
 	        	if( bit_count == 8 )
 	        	{
-	        		// std::cout << std::bitset<8>(desc[inserted_chars]) << std::endl;
 	        		inserted_chars++;
 	        		bit_count = 0;
 	        	}
 
-	        	// unsigned char cpoint = valueAt( pt, geometryData[i], grayImage );
-	        	unsigned char cpoint = smoothedSum( sum, pt, geometryData[i].y, geometryData[i].x );
+	        	unsigned char cpoint = smoothedSum(
+	        		sum, 
+	        		pt, 
+	        		geometryData[i].y,
+	        		geometryData[i].x,
+	        		this->kernelSize
+	        	);
 	        	unsigned char raw_value = 0;
 	        	unsigned char diff = 0;
 
-	        	if( center > cpoint ){ //center - cpoint is positive
+	        	if( center > cpoint ){
 	        		diff = center - cpoint;
-	        		raw_value = positiveBin[diff].to_ulong();
-	        		// increaseStatistics( positiveBin[diff] );
-	        		// result_statistics[r_possibilities/2 + diff/step]++;
-	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
+	        		raw_value = bins[255+diff].to_ulong();
 	        	}
-	        	else // center - cpoint is negative
+	        	else
 	        	{
 	        		diff = cpoint - center;
-	        		raw_value = negativeBin[diff].to_ulong();
-	        		// increaseStatistics( negativeBin[diff] );
-	        		// result_statistics[r_possibilities/2 - diff/step]++;
-	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
+	        		raw_value = bins[255-diff].to_ulong();
 	        	}
+
+	        	increaseStatistics( raw_value );
 
 	        	bit_count += numBits;
 
