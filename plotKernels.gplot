@@ -1,4 +1,6 @@
 set terminal png
 set output "graph.png"
 plot "./BRIEF_DRINK_Comp.data" using 1:2 title 'BRIEF' with lines, \
-	"./BRIEF_DRINK_Comp.data" using 1:3 title 'DRINK K3' with lines, "./BRIEF_DRINK_Comp.data" using 1:4 title 'DRINK K5' with lines, "./BRIEF_DRINK_Comp.data" using 1:5 title 'DRINK K7' with lines, "./BRIEF_DRINK_Comp.data" using 1:6 title 'DRINK K9' with lines
+	"./BRIEF_DRINK_Comp.data" using 1:3 title 'DRINK B2 S8 R4 K5' with lines, \
+	"./BRIEF_DRINK_Comp.data" using 1:4 title 'DRINK B4 S8 R4 K5' with lines, \
+	"./BRIEF_DRINK_Comp.data" using 1:5 title 'DRINK B4 S8 R4 K9' with lines

@@ -33,9 +33,19 @@ int main(int argc, const char* argv[])
         new cv::BriefDescriptorExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK K5",
+    algorithms.push_back(FeatureAlgorithm("DRINK B2 S8 R4 K5",
         new cv::FastFeatureDetector(),
-        new cv::Descriptor(5),
+        new cv::Descriptor(2,8,4,5),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K5",
+        new cv::FastFeatureDetector(),
+        new cv::Descriptor(4,8,4,5),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R4 K9",
+        new cv::FastFeatureDetector(),
+        new cv::Descriptor(4,8,4,9),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     // algorithms.push_back(FeatureAlgorithm("DRINK K7",

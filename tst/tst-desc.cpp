@@ -34,28 +34,26 @@
 using namespace cv;
 using namespace std;
 
-void showDescriptorGeometry()
-{
-	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
+// void showDescriptorGeometry()
+// {
+// 	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
 
-	for( int i = 0; i<Descriptor::ringSize * Descriptor::numRings; ++i )
-	{
-		circle(
-			img,
-			Point2i( img.cols/2, img.rows/2 ) + Descriptor::geometryData[i],
-			0,
-			Scalar( 0, 0, 25 + i*20 )
-		);
-	}
+// 	for( int i = 0; i<Descriptor::ringSize * Descriptor::numRings; ++i )
+// 	{
+// 		circle(
+// 			img,
+// 			Point2i( img.cols/2, img.rows/2 ) + Descriptor::geometryData[i],
+// 			0,
+// 			Scalar( 0, 0, 25 + i*20 )
+// 		);
+// 	}
 
-	imshow("Geometry Test", img);
-	waitKey();
-}
+// 	imshow("Geometry Test", img);
+// 	waitKey();
+// }
 
 int main( int argc, char* argv[])
 {
-	Descriptor::init();
-
 	if( argc < 23)
 		cout << "ERROR: No image path passed as argument.\n";
 
@@ -66,7 +64,7 @@ int main( int argc, char* argv[])
 	cv::Mat img2 = imread( img_path2 );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(15);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,4,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -100,17 +98,17 @@ int main( int argc, char* argv[])
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
 
-    std::cout << "Number of occurences per result\n";
-    for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
-    {
-    	cout << Descriptor::results[i] << ": " << Descriptor::result_statistics[i] << endl;
-    }
+    // std::cout << "Number of occurences per result\n";
+    // for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
+    // {
+    // 	cout << Descriptor::results[i] << ": " << Descriptor::result_statistics[i] << endl;
+    // }
 
-    std::cout << "Positive Binary Values\n";
-    for( int i = 0; i < Descriptor::positiveBin.size(); ++i)
-    {
-    	cout << i << ": " << Descriptor::positiveBin[i] << endl;
-    }
+    // std::cout << "Positive Binary Values\n";
+    // for( int i = 0; i < Descriptor::positiveBin.size(); ++i)
+    // {
+    // 	cout << i << ": " << Descriptor::positiveBin[i] << endl;
+    // }
 
     imshow("Matches", img_matches);
 	waitKey();

@@ -19,7 +19,7 @@ namespace cv{
 		public:
 
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
-		   	Descriptor( int _kernelSize );
+		   	Descriptor( int _numBits, int _ringSize, int _numRings, int _kernelSize );
 
 		   	static void init( int _numBits = 2, int _ringSize=16, int _numRings = 8 );
 
@@ -29,15 +29,15 @@ namespace cv{
 		    virtual int descriptorSize() const;
 		    virtual int descriptorType() const;
 
-		    static Point2i* geometryData;
-		    static std::vector< std::bitset<RBITS> > results;
-		    static std::vector< std::bitset<RBITS> > positiveBin;
-		    static std::vector< std::bitset<RBITS> > negativeBin;
-		    static std::vector< int > result_statistics;
+		    Point2i* geometryData;
+		    std::vector< std::bitset<RBITS> > results;
+		    std::vector< std::bitset<RBITS> > positiveBin;
+		    std::vector< std::bitset<RBITS> > negativeBin;
+		    std::vector< int > result_statistics;
 
-		    static int numBits;
-		    static int ringSize;
-		    static int numRings;
+		    int numBits;
+		    int ringSize;
+		    int numRings;
 
 		    static const int firstRadius = 5;
 		    static const int radiusStep = 5;
@@ -48,9 +48,9 @@ namespace cv{
 
 		    typedef void(*PixelTestFn)(const Mat&, const vector<KeyPoint>&, Mat&);
 
-		    static void generateGeometry();
-		    static void generateResults();
-		    static void increaseStatistics( std::bitset<RBITS> r );
+		    void generateGeometry();
+		    void generateResults();
+		    void increaseStatistics( const std::bitset<RBITS> r );
 
 		    PixelTestFn test_fn_;
 

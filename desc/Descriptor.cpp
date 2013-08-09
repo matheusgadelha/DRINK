@@ -28,34 +28,32 @@ unsigned char smoothedSum(const cv::Mat& sum, const cv::KeyPoint& pt, int y, int
 
 namespace cv{
 
-	int Descriptor::numBits;
-	int Descriptor::ringSize;
-	int Descriptor::numRings;
-
 	const int Descriptor::firstRadius;
 	const int Descriptor::radiusStep;
 	int Descriptor::kernelSize;
 
-	Point2i* Descriptor::geometryData;
-	std::vector< std::bitset<16> > Descriptor::results;
-	std::vector< std::bitset<16> > Descriptor::positiveBin;
-	std::vector< std::bitset<16> > Descriptor::negativeBin;
-	std::vector< int > Descriptor::result_statistics;
-
-	Descriptor::Descriptor( int _kernelSize = 7 )
+	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _kernelSize = 5 )
 	{
+		numBits = _numBits;
+		ringSize =_ringSize;
+		numRings = _numRings;
 		kernelSize = _kernelSize;
+
+		geometryData = new Point2i[ringSize*numRings];
+
+		generateGeometry();
+		generateResults();
 	}
 
 	void Descriptor::init( int _numBits, int _ringSize, int _numRings )
 	{
-		numBits  = _numBits;
-		ringSize = _ringSize;
-		numRings = _numRings;
+		// numBits  = _numBits;
+		// ringSize = _ringSize;
+		// numRings = _numRings;
 
-		geometryData = new Point2i[ringSize*numRings];
-		generateGeometry();
-		generateResults();
+		// geometryData = new Point2i[ringSize*numRings];
+		// generateGeometry();
+		// generateResults();
 	}
 
 	void Descriptor::generateGeometry()
@@ -93,7 +91,7 @@ namespace cv{
 		}
 	}
 
-	void Descriptor::increaseStatistics( std::bitset<RBITS> r )
+	void Descriptor::increaseStatistics( const std::bitset<RBITS> r )
 	{
 		for( int i = 0; i < results.size(); ++i )
 		{
@@ -163,7 +161,7 @@ namespace cv{
 	        	if( center > cpoint ){ //center - cpoint is positive
 	        		diff = center - cpoint;
 	        		raw_value = positiveBin[diff].to_ulong();
-	        		increaseStatistics( positiveBin[diff] );
+	        		// increaseStatistics( positiveBin[diff] );
 	        		// result_statistics[r_possibilities/2 + diff/step]++;
 	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
 	        	}
@@ -171,7 +169,7 @@ namespace cv{
 	        	{
 	        		diff = cpoint - center;
 	        		raw_value = negativeBin[diff].to_ulong();
-	        		increaseStatistics( negativeBin[diff] );
+	        		// increaseStatistics( negativeBin[diff] );
 	        		// result_statistics[r_possibilities/2 - diff/step]++;
 	        		// std::cout << std::bitset<4>(raw_value) << std::endl;
 	        	}

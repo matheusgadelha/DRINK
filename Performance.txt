@@ -1,5 +1,7 @@
 "Performance"
 "Algorithm"	"Average time per Frame"	"Average time per KeyPoint"
-"BRIEF"	610.098	0.133136
-"DRINK K5"	544.445	0.13636
+"BRIEF"	3971.21	0.884223
+"DRINK B2 S8 R4 K5"	1256.26	0.27729
+"DRINK B4 S8 R4 K5"	2174.86	0.478915
+"DRINK B4 S8 R4 K9"	2171.25	0.477194
 
