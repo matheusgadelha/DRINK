@@ -87,9 +87,11 @@ namespace cv{
 			result_statistics.push_back(0);
 		}
 
+		float alpha = 0.025f;
+		int disp = numBits/2;
 		for( int i = -255; i <= 255; ++i )
 		{
-			int idx = round(i*numBits/510.0f) + numBits/2;
+			int idx = round((disp*alpha*i)/sqrt(1+pow(alpha*i,2))) + disp;
 			bins.push_back( results[ idx ] );
 		}
 	}

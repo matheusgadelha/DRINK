@@ -104,7 +104,7 @@ int main( int argc, char* argv[])
     	cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
     }
 
-    // std::cout << "Positive Binary Values\n";
+    // std::cout << "Binary Values\n";
     // for( int i = 0; i < static_cast< Ptr<Descriptor> >(de)->bins.size(); ++i)
     // {
     // 	cout << i << ": " << static_cast< Ptr<Descriptor> >(de)->bins[i] << endl;
