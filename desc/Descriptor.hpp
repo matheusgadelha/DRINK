@@ -29,7 +29,7 @@ namespace cv{
 		    virtual int descriptorSize() const;
 		    virtual int descriptorType() const;
 
-		    Point2i* geometryData;
+		    std::vector< std::vector<Point2i> > geometryData;
 		    std::vector< std::bitset<RBITS> > results;
 		    std::vector< std::bitset<RBITS> > bins;
 
@@ -41,6 +41,8 @@ namespace cv{
 		    static std::vector< int > result_statistics;
 		    static const int firstRadius = 5;
 		    static const int radiusStep = 5;
+		    static const int scales = 8;
+		    static const float scaleFactor = 1.2f;
 
 		protected:
 		    virtual void computeImpl(

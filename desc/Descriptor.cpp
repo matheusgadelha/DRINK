@@ -45,7 +45,9 @@ namespace cv{
 		numRings = _numRings;
 		kernelSize = _kernelSize;
 
-		geometryData = new Point2i[ringSize*numRings];
+		geometryData.resize( ringSize*numRings );
+
+		for( int i=0; i < ringSize*numRings; ++i ) geometryData[i].resize( scales );
 
 		generateGeometry();
 		generateResults();
@@ -68,11 +70,20 @@ namespace cv{
 		{
 			float radius = firstRadius + radiusStep*i_ring;
 
-			for (int i = 0; i < ringSize; i++) {
+			for( int i = 0; i < ringSize; i++ ){
 				Point2i p(0,0);
-				p.x = round( radius * cos(2 * PI * i / ringSize) );
-				p.y = round( radius * sin(2 * PI * i / ringSize) );
-				geometryData[i + i_ring*ringSize] = p;
+				p.x = round( radius * cos( 2 * PI * i / ringSize ));
+				p.y = round( radius * sin( 2 * PI * i / ringSize ));
+				geometryData[ i + i_ring*ringSize ][0] = p;
+			}
+		}
+
+		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
+		{
+			for( int i_scale = 1; i_scale<scales; ++i_scale )
+			{
+				geometryData[i_point][i_scale].x = scaleFactor * geometryData[i_point][i_scale-1].x;
+				geometryData[i_point][i_scale].y = scaleFactor * geometryData[i_point][i_scale-1].y;
 			}
 		}
 	}
@@ -138,33 +149,37 @@ namespace cv{
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
-	        unsigned char center = smoothedSum(
-				sum, 
-				pt, 
-				0, 0,
-				this->kernelSize
-	        );
-	        
-	        int bit_count = 0;
-	        int inserted_chars = 0;
+	        int pt_scale = pt.octave;
 
-	        for( int i = 0; i < ringSize*numRings; ++i )
-	        {
-	        	if( bit_count == 8 )
-	        	{
-	        		inserted_chars++;
-	        		bit_count = 0;
-	        	}
+			unsigned char center = smoothedSum(
+				sum,
+				pt,
+				0,
+				0,
+				15
+			);
 
-	        	unsigned char cpoint = smoothedSum(
-	        		sum, 
-	        		pt, 
-	        		geometryData[i].y,
-	        		geometryData[i].x,
-	        		this->kernelSize
-	        	);
-	        	unsigned char raw_value = 0;
-	        	unsigned char diff = 0;
+			int bit_count = 0;
+			int inserted_chars = 0;
+
+			for( int i = 0; i < ringSize*numRings; ++i )
+			{
+				if( bit_count == 8 )
+				{
+					inserted_chars++;
+					bit_count = 0;
+				}
+
+				unsigned char cpoint =  smoothedSum(
+					sum,
+					pt,
+					geometryData[i][pt_scale].x,
+					geometryData[i][pt_scale].y,
+					9
+				);
+
+				unsigned char raw_value = 0;
+				unsigned char diff = 0;
 
 	        	if( center > cpoint ){
 	        		diff = center - cpoint;
@@ -176,7 +191,7 @@ namespace cv{
 	        		raw_value = bins[255-diff].to_ulong();
 	        	}
 
-	        	increaseStatistics( raw_value );
+	        	// increaseStatistics( raw_value );
 
 	        	bit_count += numBits;
 
@@ -191,6 +206,6 @@ namespace cv{
 	        // 	// std::cout << (int)desc[i] << " ";
 	        // }
 	        // std::cout << std::endl;
-	    }	
+	    }
 	}
 }
