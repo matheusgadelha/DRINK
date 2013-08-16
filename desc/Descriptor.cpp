@@ -49,6 +49,10 @@ namespace cv{
 
 		for( int i=0; i < ringSize*numRings; ++i ) geometryData[i].resize( scales );
 
+		for( int i=0; i < ringSize*numRings; ++i )
+			for( int j=0; j < scales; ++j )
+				geometryData[i][j].resize( rotations );
+
 		generateGeometry();
 		generateResults();
 	}
@@ -74,7 +78,7 @@ namespace cv{
 				Point2i p(0,0);
 				p.x = round( radius * cos( 2 * PI * i / ringSize ));
 				p.y = round( radius * sin( 2 * PI * i / ringSize ));
-				geometryData[ i + i_ring*ringSize ][0] = p;
+				geometryData[ i + i_ring*ringSize ][0][0] = p;
 			}
 		}
 
@@ -82,8 +86,25 @@ namespace cv{
 		{
 			for( int i_scale = 1; i_scale<scales; ++i_scale )
 			{
-				geometryData[i_point][i_scale].x = scaleFactor * geometryData[i_point][i_scale-1].x;
-				geometryData[i_point][i_scale].y = scaleFactor * geometryData[i_point][i_scale-1].y;
+				geometryData[i_point][i_scale][0].x = scaleFactor * geometryData[i_point][i_scale-1][0].x;
+				geometryData[i_point][i_scale][0].y = scaleFactor * geometryData[i_point][i_scale-1][0].y;
+			}
+		}
+
+		float rot_angle = rotations/360;
+
+		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
+		{
+			for( int i_scale = 0; i_scale<scales; ++i_scale )
+			{
+				for( int i_rot = 1; i_rot< rotations; ++i_rot )
+				{
+					geometryData[i_point][i_scale][i_rot].x = cos(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].x +
+															  -sin(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].y;
+
+					geometryData[i_point][i_scale][i_rot].y = sin(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].x +
+															  cos(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].y;
+				}
 			}
 		}
 	}
@@ -144,19 +165,24 @@ namespace cv{
 	    const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
 
+    	float conversion_rot = rotations/360.0f;
+
 	    for( unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp )
 	    {
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
 	        int pt_scale = pt.octave;
+	        int rot_idx = conversion_rot * pt.angle;
+
+	        // std::cout << "rot_idx " << rot_idx << std::endl; 
 
 			unsigned char center = smoothedSum(
 				sum,
 				pt,
 				0,
 				0,
-				15
+				9
 			);
 
 			int bit_count = 0;
@@ -173,8 +199,8 @@ namespace cv{
 				unsigned char cpoint =  smoothedSum(
 					sum,
 					pt,
-					geometryData[i][pt_scale].x,
-					geometryData[i][pt_scale].y,
+					geometryData[i][pt_scale][rot_idx].x,
+					geometryData[i][pt_scale][rot_idx].y,
 					9
 				);
 

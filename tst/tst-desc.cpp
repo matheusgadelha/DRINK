@@ -64,7 +64,7 @@ int main( int argc, char* argv[])
 	cv::Mat img2 = imread( img_path2 );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,6,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,8,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
