@@ -33,7 +33,7 @@ int main(int argc, const char* argv[])
         new cv::BriefDescriptorExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R5 K5",
+    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R K5",
         new cv::ORB(),
         new cv::Descriptor(4,8,5,5),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));

@@ -39,11 +39,11 @@ namespace cv{
 		    int kernelSize;
 
 		    static std::vector< int > result_statistics;
-		    static const int firstRadius = 5;
+		    static const int firstRadius = 7;
 		    static const int radiusStep = 5;
 		    static const int scales = 8;
 		    static const float scaleFactor = 1.2f;
-		    static const int rotations = 8;
+		    static const int rotations = 16;
 
 		protected:
 		    virtual void computeImpl(

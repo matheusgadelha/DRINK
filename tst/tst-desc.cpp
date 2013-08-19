@@ -34,23 +34,23 @@
 using namespace cv;
 using namespace std;
 
-// void showDescriptorGeometry()
-// {
-// 	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
+void showDescriptorGeometry( Descriptor& d, int scale, int rot)
+{
+	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
 
-// 	for( int i = 0; i<Descriptor::ringSize * Descriptor::numRings; ++i )
-// 	{
-// 		circle(
-// 			img,
-// 			Point2i( img.cols/2, img.rows/2 ) + Descriptor::geometryData[i],
-// 			0,
-// 			Scalar( 0, 0, 25 + i*20 )
-// 		);
-// 	}
+	for( int i = 0; i<d.ringSize * d.numRings; ++i )
+	{
+		circle(
+			img,
+			Point2i( img.cols/2, img.rows/2 ) + d.geometryData[i][scale][rot],
+			0,
+			Scalar( 0, 0, 25 + i*10 )
+		);
+	}
 
-// 	imshow("Geometry Test", img);
-// 	waitKey();
-// }
+	imshow("Geometry Test", img);
+	waitKey();
+}
 
 int main( int argc, char* argv[])
 {
@@ -64,7 +64,7 @@ int main( int argc, char* argv[])
 	cv::Mat img2 = imread( img_path2 );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,8,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -112,7 +112,13 @@ int main( int argc, char* argv[])
 
     imshow("Matches", img_matches);
 	waitKey();
-	// showDescriptorGeometry();
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,0);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,1);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,2);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,3);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 1,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 2,4);
 
 	return 0;
 }

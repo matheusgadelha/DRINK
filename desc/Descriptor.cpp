@@ -91,19 +91,19 @@ namespace cv{
 			}
 		}
 
-		float rot_angle = rotations/360;
+		float rot_angle = 360.0f/rotations;
 
 		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
 		{
-			for( int i_scale = 0; i_scale<scales; ++i_scale )
+			for( int i_scale = 0; i_scale < scales; ++i_scale )
 			{
-				for( int i_rot = 1; i_rot< rotations; ++i_rot )
+				for( int i_rot = 1; i_rot < rotations; ++i_rot )
 				{
-					geometryData[i_point][i_scale][i_rot].x = cos(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].x +
-															  -sin(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].y;
+					geometryData[i_point][i_scale][i_rot].x = cos(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].x +
+															  sin(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].y;
 
-					geometryData[i_point][i_scale][i_rot].y = sin(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].x +
-															  cos(rot_angle*PI/180.0f) * geometryData[i_point][i_scale][i_rot-1].y;
+					geometryData[i_point][i_scale][i_rot].y = -sin(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].x +
+															  cos(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].y;
 				}
 			}
 		}
