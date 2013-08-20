@@ -35,9 +35,6 @@ namespace cv{
 
 	std::vector< int > Descriptor::result_statistics;
 
-	const int Descriptor::firstRadius;
-	const int Descriptor::radiusStep;
-
 	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _kernelSize = 5 )
 	{
 		numBits = _numBits;
@@ -45,12 +42,15 @@ namespace cv{
 		numRings = _numRings;
 		kernelSize = _kernelSize;
 
+		radiusStep = BIGGEST_RADIUS/numRings;
+		firstRadius = radiusStep;
+
 		geometryData.resize( ringSize*numRings );
 
-		for( int i=0; i < ringSize*numRings; ++i ) geometryData[i].resize( scales );
+		for( int i=0; i < ringSize*numRings; ++i ) geometryData[i].resize( SCALE_STEPS );
 
 		for( int i=0; i < ringSize*numRings; ++i )
-			for( int j=0; j < scales; ++j )
+			for( int j=0; j < SCALE_STEPS; ++j )
 				geometryData[i][j].resize( rotations );
 
 		generateGeometry();
@@ -70,6 +70,7 @@ namespace cv{
 
 	void Descriptor::generateGeometry()
 	{
+
 		for( int i_ring = 0; i_ring < numRings; ++i_ring )
 		{
 			float radius = firstRadius + radiusStep*i_ring;
@@ -82,12 +83,15 @@ namespace cv{
 			}
 		}
 
+		static const float k = exp(log(SMALLEST_SCALE) / (SCALE_STEPS - 1));
+
 		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
 		{
-			for( int i_scale = 1; i_scale<scales; ++i_scale )
+			for( int i_scale = 0; i_scale < SCALE_STEPS; ++i_scale )
 			{
-				geometryData[i_point][i_scale][0].x = scaleFactor * geometryData[i_point][i_scale-1][0].x;
-				geometryData[i_point][i_scale][0].y = scaleFactor * geometryData[i_point][i_scale-1][0].y;
+				const float scaleFactor = pow(k, i_scale);
+				geometryData[i_point][i_scale][0].x = scaleFactor * geometryData[i_point][0][0].x;
+				geometryData[i_point][i_scale][0].y = scaleFactor * geometryData[i_point][0][0].y;
 			}
 		}
 
@@ -95,7 +99,7 @@ namespace cv{
 
 		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
 		{
-			for( int i_scale = 0; i_scale < scales; ++i_scale )
+			for( int i_scale = 0; i_scale < SCALE_STEPS; ++i_scale )
 			{
 				for( int i_rot = 1; i_rot < rotations; ++i_rot )
 				{
@@ -172,8 +176,10 @@ namespace cv{
 	        uchar* desc = descriptors.ptr(i_kp);
 	        const KeyPoint& pt = keypoints[i_kp];
 
-	        int pt_scale = pt.octave;
+	        int pt_scale = 7-pt.octave;
 	        int rot_idx = conversion_rot * pt.angle;
+
+	        // std::cout << pt.octave << " " << pt.size << std::endl;
 
 	        // std::cout << "rot_idx " << rot_idx << std::endl; 
 
@@ -182,7 +188,7 @@ namespace cv{
 				pt,
 				0,
 				0,
-				9
+				kernelSize
 			);
 
 			int bit_count = 0;
@@ -190,6 +196,7 @@ namespace cv{
 
 			for( int i = 0; i < ringSize*numRings; ++i )
 			{
+
 				if( bit_count == 8 )
 				{
 					inserted_chars++;
@@ -201,7 +208,7 @@ namespace cv{
 					pt,
 					geometryData[i][pt_scale][rot_idx].x,
 					geometryData[i][pt_scale][rot_idx].y,
-					9
+					kernelSize
 				);
 
 				unsigned char raw_value = 0;

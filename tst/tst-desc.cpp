@@ -64,7 +64,7 @@ int main( int argc, char* argv[])
 	cv::Mat img2 = imread( img_path2 );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,3,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -110,15 +110,26 @@ int main( int argc, char* argv[])
     // 	cout << i << ": " << static_cast< Ptr<Descriptor> >(de)->bins[i] << endl;
     // }
 
+    for( int i = kps1.size(); --i; )
+    {
+	    circle(
+				img_matches,
+				Point2i( kps1[i].pt.x, kps1[i].pt.y ),
+				kps1[i].size,
+				Scalar( 0, 0, 255 )
+			);    	
+    }
+
     imshow("Matches", img_matches);
 	waitKey();
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,0);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,1);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,2);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,3);
 	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,4);
 	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 1,4);
 	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 2,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 3,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 4,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 5,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 6,4);
+	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 7,4);
 
 	return 0;
 }

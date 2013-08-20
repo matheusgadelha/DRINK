@@ -35,12 +35,12 @@ int main(int argc, const char* argv[])
 
     algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R K5",
         new cv::ORB(),
-        new cv::Descriptor(4,8,5,5),
+        new cv::Descriptor(4,16,4,9),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     algorithms.push_back(FeatureAlgorithm("FREAK",
         new cv::ORB(),
-        new cv::FREAK(),
+        new cv::FREAK(true, true, 22.0f, 8),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     algorithms.push_back(FeatureAlgorithm("ORB",

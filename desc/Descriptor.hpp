@@ -38,12 +38,17 @@ namespace cv{
 		    int numRings;
 		    int kernelSize;
 
+		    int radiusStep;
+		    int firstRadius;
+
 		    static std::vector< int > result_statistics;
-		    static const int firstRadius = 7;
-		    static const int radiusStep = 5;
 		    static const int scales = 8;
-		    static const float scaleFactor = 1.2f;
-		    static const int rotations = 16;
+		    static const int rotations = 32;
+
+		    static const double LOG2 = 0.693147180559945;
+		    static const float BIGGEST_RADIUS = 111.0f;
+		    static const float SMALLEST_SCALE = 0.5;
+		    static const float SCALE_STEPS = 8;
 
 		protected:
 		    virtual void computeImpl(
