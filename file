@@ -1,8 +1,0 @@
-g++ Descriptor.cpp -c -Wall -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video -I/usr/local/include/opencv2 -I/usr/local/include
-ar rvs libdescriptor.a Descriptor.o
-a - Descriptor.o
-ranlib libdescriptor.a
-mv libdescriptor.a ../lib/
-rm -r *.o
-g++ tst-desc.cpp -o tst-desc -Wall -L../lib/ -ldescriptor -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video -I/usr/local/include/opencv2 -I/usr/local/include -I../desc 
-cd .

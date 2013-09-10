@@ -43,13 +43,26 @@ void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 		circle(
 			img,
 			Point2i( img.cols/2, img.rows/2 ) + d.geometryData[i][scale][rot],
-			0,
-			Scalar( 0, 0, 25 + i*10 )
+			1,
+			Scalar( 255, 255, 0)
 		);
 	}
 
 	imshow("Geometry Test", img);
 	waitKey();
+}
+
+void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const int rot, const KeyPoint& pt )
+{
+	for( int i = 0; i<d.ringSize * d.numRings; ++i )
+	{
+		circle(
+			img,
+			Point2i( pt.pt.x, pt.pt.y ) + d.geometryData[i][scale][rot],
+			1,
+			Scalar( 255, 255, 0)
+		);
+	}	
 }
 
 int main( int argc, char* argv[])
@@ -63,8 +76,8 @@ int main( int argc, char* argv[])
 	cv::Mat img1 = imread( img_path1 );
 	cv::Mat img2 = imread( img_path2 );
 
-	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,3,5);
+	Ptr<FeatureDetector> fd = new BRISK(130);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,5);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -99,7 +112,7 @@ int main( int argc, char* argv[])
     );
 
     std::cout << "Number of occurences per result\n";
-    for( int i = 0; i < Descriptor::result_statistics.size(); ++i)
+    for( int i = 0; i < Descriptor::result_statistics.size(); ++i )
     {
     	cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
     }
@@ -117,19 +130,45 @@ int main( int argc, char* argv[])
 				Point2i( kps1[i].pt.x, kps1[i].pt.y ),
 				kps1[i].size,
 				Scalar( 0, 0, 255 )
-			);    	
+			); 
+
+		drawDescriptorGeometryAtKp(
+			img_matches,
+			*(static_cast< Ptr<Descriptor> >( de )),
+			round(log(kps1[i].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+			0,
+			kps1[i]
+		);
+		std::cout << kps1[i].size << std::endl;
     }
 
-    imshow("Matches", img_matches);
+    for( int i = kps2.size(); --i; )
+    {
+    	KeyPoint kp = kps2[i];
+    	kp.pt.x += img1.cols;
+
+	    circle(
+				img_matches,
+				Point2i( kp.pt.x, kp.pt.y ),
+				kp.size,
+				Scalar( 0, 0, 255 )
+			); 
+
+		drawDescriptorGeometryAtKp(
+			img_matches,
+			*(static_cast< Ptr<Descriptor> >( de )),
+			round(log(kp.size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+			0,
+			kp
+		);
+		std::cout << kps1[i].size << std::endl;
+    }
+
+    imshow( "Matches", img_matches );
 	waitKey();
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 0,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 1,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 2,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 3,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 4,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 5,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 6,4);
-	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)), 7,4);
+
+	// for( int i = 0; i < 8; ++i )
+	// 	showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),i,0);
 
 	return 0;
 }

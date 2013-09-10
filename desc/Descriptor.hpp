@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <bitset>
+#include <cstdlib>
 
 #include "opencv2/opencv.hpp"
 
@@ -32,6 +33,7 @@ namespace cv{
 		    std::vector< std::vector< std::vector<Point2i> > > geometryData;
 		    std::vector< std::bitset<RBITS> > results;
 		    std::vector< std::bitset<RBITS> > bins;
+		    std::vector<int> pairs;
 
 		    int numBits;
 		    int ringSize;
@@ -43,12 +45,14 @@ namespace cv{
 
 		    static std::vector< int > result_statistics;
 		    static const int scales = 8;
-		    static const int rotations = 32;
+		    static const int rotations = 8;
 
 		    static const double LOG2 = 0.693147180559945;
-		    static const float BIGGEST_RADIUS = 111.0f;
-		    static const float SMALLEST_SCALE = 0.5;
-		    static const float SCALE_STEPS = 8;
+		    static const float BIGGEST_RADIUS = 110.0f;
+		    static const float SCALE_SAMPLES = 30;
+		    static const float SCALE_FACTOR = 0.9f;
+
+		    float smallestRadius;
 
 		protected:
 		    virtual void computeImpl(
@@ -60,6 +64,7 @@ namespace cv{
 
 		    void generateGeometry();
 		    void generateResults();
+		    void generateRandomPairs();
 		    void increaseStatistics( const std::bitset<RBITS> r ) const;
 
 		    PixelTestFn test_fn_;
