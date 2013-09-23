@@ -130,7 +130,7 @@ namespace cv{
 			result_statistics.push_back(0);
 		}
 
-		float alpha = 0.015f;
+		float alpha = 0.025f;
 		int disp = numBits/2;
 		for( int i = -255; i <= 255; ++i )
 		{
@@ -169,7 +169,7 @@ namespace cv{
 	    Mat grayImage = image;
 	    if( image.type() != CV_8U ) cvtColor( image, grayImage, CV_BGR2GRAY );
 
-	    integral( grayImage, sum, CV_32S);
+	    integral( grayImage, sum, CV_32S );
 
 	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
 
@@ -204,7 +204,7 @@ namespace cv{
 			int bit_count = 0;
 			int inserted_chars = 0;
 
-			for( int i = 0; i < geometryData.size(); i+=2 )
+			for( int i = 0; i < geometryData.size(); i++ )
 			{
 
 				if( bit_count == 8 )
@@ -227,8 +227,8 @@ namespace cv{
 				unsigned char cpoint =  smoothedSum(
 					sum,
 					pt,
-					geometryData[i][pt_scale][0].x,
-					geometryData[i][pt_scale][0].y,
+					geometryData[i][pt_scale][rot_idx].x,
+					geometryData[i][pt_scale][rot_idx].y,
 					kernelSize
 				);
 
@@ -245,7 +245,7 @@ namespace cv{
 	        		raw_value = bins[255-diff].to_ulong();
 	        	}
 
-	        	// increaseStatistics( raw_value );
+	        	increaseStatistics( raw_value );
 
 	        	bit_count += numBits;
 

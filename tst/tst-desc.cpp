@@ -34,6 +34,24 @@
 using namespace cv;
 using namespace std;
 
+unsigned char testSmoothedSum(
+	const cv::Mat& sum,
+	const cv::KeyPoint& pt, 
+	int y, 
+	int x, 
+	const int _kernelSize
+){
+    static const int HALF_KERNEL = _kernelSize/2;
+
+    int img_y = (int)(pt.pt.y) + y;
+    int img_x = (int)(pt.pt.x) + x;
+    int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
+           - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
+           - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
+           + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
+    return (unsigned char) val;
+}
+
 void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 {
 	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
@@ -65,6 +83,33 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 	}	
 }
 
+void printDescriptorProcedure( Mat& img, Descriptor& d, const int scale, const int rot, const KeyPoint& pt )
+{
+	std::cout 
+		<< "Center: "
+		<< (int)testSmoothedSum(
+			img,
+			pt,
+			0,
+			0,
+			d.kernelSize
+		);
+	// std::cout << std::endl;
+
+	// std::cout << "Geometry: " << std::endl;
+	// for( int i = 0; i<d.ringSize * d.numRings; ++i )
+	// {
+	// 	std::cout << (int)testSmoothedSum(
+	// 		img,
+	// 		pt,
+	// 		d.geometryData[i][scale][rot].x,
+	// 		d.geometryData[i][scale][rot].y,
+	// 		d.kernelSize
+	// 	);
+	// 	std::cout << std::endl;
+	// }
+}
+
 int main( int argc, char* argv[])
 {
 	if( argc < 23)
@@ -73,11 +118,17 @@ int main( int argc, char* argv[])
 	const char * img_path1 = argv[1];
 	const char * img_path2 = argv[2];
 
+
+	Mat img_sum1, img_sum2;
+
 	cv::Mat img1 = imread( img_path1 );
 	cv::Mat img2 = imread( img_path2 );
 
+	integral( img1, img_sum1, CV_32S );
+	integral( img2, img_sum2, CV_32S );
+
 	Ptr<FeatureDetector> fd = new BRISK(130);
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,4,5,13);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -163,6 +214,61 @@ int main( int argc, char* argv[])
 		);
 		std::cout << kps1[i].size << std::endl;
     }
+
+    const int descriptor_type_size = ((float)static_cast< Ptr<Descriptor> >(de)->numBits/8)*
+    									static_cast< Ptr<Descriptor> >(de)->ringSize*
+    									static_cast< Ptr<Descriptor> >(de)->numRings;
+
+    uchar* desc = descs1.ptr(4);
+    for( int i=0; i < descriptor_type_size; ++i )
+	{
+	   	std::cout << std::bitset<8>(desc[i]) << " ";
+	  	// std::cout << (int)desc[i] << " ";
+	}
+	std::cout << std::endl;
+
+	printDescriptorProcedure(
+		img1,
+		*(static_cast< Ptr<Descriptor> >( de )),
+		round(log(kps1[4].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		0,
+		kps1[4]
+	);
+	std::cout << std::endl;
+
+	desc = descs2.ptr(11);
+    for( int i=0; i < descriptor_type_size; ++i )
+	{
+	   	std::cout << std::bitset<8>(desc[i]) << " ";
+	}
+	std::cout << std::endl;
+
+	printDescriptorProcedure(
+		img2,
+		*(static_cast< Ptr<Descriptor> >( de )),
+		round(log(kps2[11].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		0,
+		kps2[11]
+	);
+	std::cout << std::endl;
+
+	desc = descs2.ptr(39);
+    for( int i=0; i < descriptor_type_size; ++i )
+	{
+	   	std::cout << std::bitset<8>(desc[i]) << " ";
+	  	// std::cout << (int)desc[i] << " ";
+	}
+	std::cout << std::endl;
+
+	printDescriptorProcedure(
+		img2,
+		*(static_cast< Ptr<Descriptor> >( de )),
+		round(log(kps2[39].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		0,
+		kps2[39]
+	);
+	std::cout << std::endl;
+
 
     imshow( "Matches", img_matches );
 	waitKey();
