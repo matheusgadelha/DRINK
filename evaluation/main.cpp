@@ -35,7 +35,7 @@ int main(int argc, const char* argv[])
 
     algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R K5",
         new cv::ORB(),
-        new cv::Descriptor(4,16,8,13),
+        new cv::Descriptor(4,6,6,64),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     algorithms.push_back(FeatureAlgorithm("FREAK",

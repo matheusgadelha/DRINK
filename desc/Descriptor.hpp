@@ -16,11 +16,22 @@ namespace cv{
 
 	class CV_EXPORTS Descriptor : public cv::DescriptorExtractor
 	{
+		protected:
+			struct PatternPoint
+			{
+				PatternPoint();
+				PatternPoint( int _x, int _y );
+
+				int x;
+				int y;
+				int sigma;
+			};
+
 
 		public:
 
 		    // bytes is a length of descriptor in bytes. It can be equal 16, 32 or 64 bytes.
-		   	Descriptor( int _numBits, int _ringSize, int _numRings, int _kernelSize );
+		   	Descriptor( int _numBits, int _ringSize, int _numRings, int _pairs );
 
 		   	static void init( int _numBits = 2, int _ringSize=16, int _numRings = 8 );
 
@@ -30,7 +41,7 @@ namespace cv{
 		    virtual int descriptorSize() const;
 		    virtual int descriptorType() const;
 
-		    std::vector< std::vector< std::vector<Point2i> > > geometryData;
+		    std::vector< std::vector< std::vector<PatternPoint> > > geometryData;
 		    std::vector< std::bitset<RBITS> > results;
 		    std::vector< std::bitset<RBITS> > bins;
 		    std::vector<int> pairs;
@@ -38,7 +49,8 @@ namespace cv{
 		    int numBits;
 		    int ringSize;
 		    int numRings;
-		    int kernelSize;
+		    int numPairs;
+		    int numPoints;
 
 		    int radiusStep;
 		    int firstRadius;
@@ -51,10 +63,12 @@ namespace cv{
 		    static const float BIGGEST_RADIUS = 110.0f;
 		    static const float SCALE_SAMPLES = 30;
 		    static const float SCALE_FACTOR = 0.9f;
+		    static const float GEOMETRY_SCALE_FACTOR = 0.65f;
 
 		    float smallestRadius;
 
 		protected:
+
 		    virtual void computeImpl(
 		    	const Mat& image,
 		    	vector<KeyPoint>& keypoints,

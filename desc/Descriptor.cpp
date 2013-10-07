@@ -35,15 +35,30 @@ namespace cv{
 
 	std::vector< int > Descriptor::result_statistics;
 
-	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _kernelSize = 5 )
+	Descriptor::PatternPoint::PatternPoint( int _x, int _y )
+	{
+		x = _x;
+		y = _y;
+		sigma = 1;
+	}
+
+	Descriptor::PatternPoint::PatternPoint()
+	{
+		x = 0;
+		y = 0;
+		sigma = 1;
+	}
+
+	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _pairs = 5 )
 	{
 		numBits = _numBits;
 		ringSize =_ringSize;
 		numRings = _numRings;
-		kernelSize = _kernelSize;
+		numPairs = _pairs;
 
 		radiusStep = BIGGEST_RADIUS / numRings;
 		firstRadius = radiusStep;
+		numPoints = 0;
 
 		geometryData.resize( ringSize*numRings );
 
@@ -55,7 +70,7 @@ namespace cv{
 
 		generateGeometry();
 		generateResults();
-		// generateRandomPairs();
+		generateRandomPairs();
 	}
 
 	void Descriptor::init( int _numBits, int _ringSize, int _numRings )
@@ -70,30 +85,49 @@ namespace cv{
 	}
 
 	void Descriptor::generateRandomPairs()
-	{
-		int total_pairs = ringSize * numRings * 2;
-
-		for(int i=0; i<total_pairs; ++i)
-			pairs.push_back( rand() % (ringSize*numRings) );
+	{ 
+		for(int i=0; i<numPairs*2; ++i)
+		{
+			pairs.push_back( rand() % (numPoints) );
+		}
 	}
 
 	void Descriptor::generateGeometry()
 	{
-		this->smallestRadius = pow( SCALE_FACTOR, SCALE_SAMPLES-1 )*BIGGEST_RADIUS;
+		// PATTERN GEOMETRY
+		this->smallestRadius = pow( GEOMETRY_SCALE_FACTOR, SCALE_SAMPLES-1 )*BIGGEST_RADIUS;
 		float rot_angle = 360.0f/rotations;
+
+		float radius = BIGGEST_RADIUS;
+		float inner_angle = 360.0f/((float)ringSize);
 
 		for( int i_ring = 0; i_ring < numRings; ++i_ring )
 		{
-			float radius = BIGGEST_RADIUS;
+			radius = pow( GEOMETRY_SCALE_FACTOR, i_ring )*BIGGEST_RADIUS;
+
+			float sigma_sample = radius*sin(inner_angle * PI/180.0f)/2.0f;
 
 			for( int i = 0; i < ringSize; i++ ){
-				Point2i p(0,0);
+				PatternPoint p(0,0);
+
 				p.x = round( radius * cos( 2 * PI * i / ringSize ));
 				p.y = round( radius * sin( 2 * PI * i / ringSize ));
+
+				if( i_ring % 2 )
+				{
+					p.x = round( cos(PI/ringSize) * float(p.x) -
+						  sin(PI/ringSize) * float(p.y) );
+
+					p.y = round( sin(PI/ringSize) * float(p.x) +
+						  cos(PI/ringSize) * float(p.y) );
+				}
+				p.sigma = round( sigma_sample );
 				geometryData[ i + i_ring*ringSize ][0][0] = p;
+				numPoints++;
 			}
 		}
 
+		// SCALE SAMPLES
 		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
 		{
 			for( int i_scale = 1; i_scale < SCALE_SAMPLES; ++i_scale )
@@ -101,9 +135,11 @@ namespace cv{
 				float sclFactor = pow( SCALE_FACTOR, i_scale );
 				geometryData[i_point][i_scale][0].x = sclFactor * geometryData[i_point][0][0].x;
 				geometryData[i_point][i_scale][0].y = sclFactor * geometryData[i_point][0][0].y;
+				geometryData[i_point][i_scale][0].sigma = sclFactor * geometryData[i_point][0][0].sigma;
 			}
 		}
 
+		// ROTATION SAMPLES
 		for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
 		{
 			for( int i_scale = 0; i_scale < SCALE_SAMPLES; ++i_scale )
@@ -115,6 +151,8 @@ namespace cv{
 
 					geometryData[i_point][i_scale][i_rot].y = -sin(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].x +
 															  cos(rot_angle*PI/180.0f) * (float)geometryData[i_point][i_scale][i_rot-1].y;
+
+					geometryData[i_point][i_scale][i_rot].sigma = geometryData[i_point][0][0].sigma;
 				}
 			}
 		}
@@ -173,7 +211,7 @@ namespace cv{
 
 	    KeyPointsFilter::runByImageBorder(keypoints, image.size(), firstRadius + radiusStep*numRings);
 
-	    const int descriptor_type_size = ((float)numBits/8)*ringSize*numRings;
+	    const int descriptor_type_size = ((float)numBits/8)*numPairs;
     	descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
 
     	float conversion_rot = rotations/360.0f;
@@ -193,18 +231,18 @@ namespace cv{
 
 	        // std::cout << "rot_idx " << rot_idx << std::endl; 
 
-			unsigned char center = smoothedSum(
-				sum,
-				pt,
-				0,
-				0,
-				kernelSize
-			);
+			// unsigned char center = smoothedSum(
+			// 	sum,
+			// 	pt,
+			// 	0,
+			// 	0,
+			// 	kernelSize
+			// );
 
 			int bit_count = 0;
 			int inserted_chars = 0;
 
-			for( int i = 0; i < geometryData.size(); i++ )
+			for( int i = 0; i < numPairs; i++ )
 			{
 
 				if( bit_count == 8 )
@@ -213,13 +251,13 @@ namespace cv{
 					bit_count = 0;
 				}
 
-				// unsigned char center = smoothedSum(
-				// 	sum,
-				// 	pt,
-				// 	geometryData[pairs[i]][pt_scale][rot_idx].x,
-				// 	geometryData[pairs[i]][pt_scale][rot_idx].y,
-				// 	kernelSize
-				// );
+				unsigned char center = smoothedSum(
+					sum,
+					pt,
+					geometryData[pairs[i*2]][pt_scale][rot_idx].x,
+					geometryData[pairs[i*2]][pt_scale][rot_idx].y,
+					geometryData[pairs[i*2]][pt_scale][rot_idx].sigma
+				);
 
 				// unsigned char center = valueAt( pt, geometryData[pairs[i]][pt_scale][rot_idx], grayImage );
 				// unsigned char cpoint = valueAt( pt, geometryData[pairs[i+1]][pt_scale][rot_idx], grayImage );
@@ -227,9 +265,9 @@ namespace cv{
 				unsigned char cpoint =  smoothedSum(
 					sum,
 					pt,
-					geometryData[i][pt_scale][rot_idx].x,
-					geometryData[i][pt_scale][rot_idx].y,
-					kernelSize
+					geometryData[pairs[i*2+1]][pt_scale][rot_idx].x,
+					geometryData[pairs[i*2+1]][pt_scale][rot_idx].y,
+					geometryData[pairs[i*2+1]][pt_scale][rot_idx].sigma
 				);
 
 				unsigned char raw_value = 0;
