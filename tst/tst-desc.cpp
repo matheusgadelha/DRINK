@@ -73,6 +73,18 @@ void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 			Scalar( 0, 0, 255)
 		);
 	}
+	// for( int i=0; i < d.numPairs; ++i )
+	// {
+	// 	float colorAtt = 255.0f;
+	// 	line(
+	// 		img,
+	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
+	// 				 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
+	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
+	// 				 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
+	// 		Scalar( 0, colorAtt, colorAtt )
+	// 	);
+	// }
 
 	imshow("Geometry Test", img);
 	waitKey();
@@ -97,7 +109,20 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 			d.geometryData[i][scale][rot].sigma,
 			Scalar( 0, 0, 255)
 		);
-	}	
+	}
+
+	for( int i=0; i < d.numPairs; ++i )
+	{
+		float colorAtt = 255.0f;
+		line(
+			img,
+			Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
+					 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
+			Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
+					 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
+			Scalar( 0, colorAtt, colorAtt )
+		);
+	}
 }
 
 // void printDescriptorProcedure( Mat& img, Descriptor& d, const int scale, const int rot, const KeyPoint& pt )
@@ -145,7 +170,7 @@ int main( int argc, char* argv[])
 	integral( img2, img_sum2, CV_32S );
 
 	Ptr<FeatureDetector> fd = new BRISK(130);
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,5,5);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,6,128,true);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -233,16 +258,15 @@ int main( int argc, char* argv[])
     }
 
     const int descriptor_type_size = ((float)static_cast< Ptr<Descriptor> >(de)->numBits/8)*
-    									static_cast< Ptr<Descriptor> >(de)->ringSize*
-    									static_cast< Ptr<Descriptor> >(de)->numRings;
+    									static_cast< Ptr<Descriptor> >(de)->numPairs;
 
-    uchar* desc = descs1.ptr(4);
-    for( int i=0; i < descriptor_type_size; ++i )
-	{
-	   	std::cout << std::bitset<8>(desc[i]) << " ";
-	  	// std::cout << (int)desc[i] << " ";
-	}
-	std::cout << std::endl;
+ //    uchar* desc = descs1.ptr(4);
+ //    for( int i=0; i < descriptor_type_size; ++i )
+	// {
+	//    	std::cout << std::bitset<8>(desc[i]) << " ";
+	//   	// std::cout << (int)desc[i] << " ";
+	// }
+	// std::cout << std::endl;
 
 	// printDescriptorProcedure(
 	// 	img1,
@@ -253,12 +277,12 @@ int main( int argc, char* argv[])
 	// );
 	// std::cout << std::endl;
 
-	desc = descs2.ptr(11);
-    for( int i=0; i < descriptor_type_size; ++i )
-	{
-	   	std::cout << std::bitset<8>(desc[i]) << " ";
-	}
-	std::cout << std::endl;
+	// desc = descs2.ptr(11);
+ //    for( int i=0; i < descriptor_type_size; ++i )
+	// {
+	//    	std::cout << std::bitset<8>(desc[i]) << " ";
+	// }
+	// std::cout << std::endl;
 
 	// printDescriptorProcedure(
 	// 	img2,
@@ -269,13 +293,13 @@ int main( int argc, char* argv[])
 	// );
 	// std::cout << std::endl;
 
-	desc = descs2.ptr(39);
-    for( int i=0; i < descriptor_type_size; ++i )
-	{
-	   	std::cout << std::bitset<8>(desc[i]) << " ";
-	  	// std::cout << (int)desc[i] << " ";
-	}
-	std::cout << std::endl;
+	// desc = descs2.ptr(39);
+ //    for( int i=0; i < descriptor_type_size; ++i )
+	// {
+	//    	std::cout << std::bitset<8>(desc[i]) << " ";
+	//   	// std::cout << (int)desc[i] << " ";
+	// }
+	// std::cout << std::endl;
 
 	// printDescriptorProcedure(
 	// 	img2,
@@ -290,8 +314,9 @@ int main( int argc, char* argv[])
     imshow( "Matches", img_matches );
 	waitKey();
 
-	for( int i = 0; i < 8; ++i )
-		showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),i,0);
+	for( int i = 0; i < 30; ++i )
+		for( int j=0; j<18; ++j)
+			showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
 
 	return 0;
 }
