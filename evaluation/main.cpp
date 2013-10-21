@@ -9,6 +9,17 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
+#include <string>
+#include <sstream>
+
+using namespace std;
+
+string itos(int i) // convert int to string
+{
+    stringstream s;
+    s << i;
+    return s.str();
+}
 
 
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
@@ -76,10 +87,19 @@ int main(int argc, const char* argv[])
         new cv::BriefDescriptorExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("DRINK B4 S8 R K5",
+    // for( int i=4; i<15; ++i )
+    //     for( int j=7; j<9; ++j)
+    //     {
+    //         algorithms.push_back(FeatureAlgorithm("DRINK S"+itos(i)+" R"+itos(j)),
+    //             new cv::ORB(),
+    //             new cv::Descriptor(4,i,j,64,false),
+    //             new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));            
+    //     }
+
+    algorithms.push_back(FeatureAlgorithm("DRINK",
         new cv::ORB(),
-        new cv::Descriptor(4,6,6,128,false),
-        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+        new cv::Descriptor(4,6,6,64,true),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));            
 
     algorithms.push_back(FeatureAlgorithm("FREAK",
         new cv::ORB(),

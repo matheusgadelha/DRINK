@@ -16,7 +16,7 @@ namespace cv{
 
 	class CV_EXPORTS Descriptor : public cv::DescriptorExtractor
 	{
-		protected:
+		public:
 			struct PatternPoint
 			{
 				PatternPoint();
@@ -25,6 +25,17 @@ namespace cv{
 				int x;
 				int y;
 				int sigma;
+				int sigmaSqrd;
+			};
+
+			struct TestPair
+			{
+				TestPair();
+				TestPair( int _a, int _b );
+				int a;
+				int b;
+				int result;
+				std::vector<int> resultCount;
 			};
 
 
@@ -44,7 +55,8 @@ namespace cv{
 		    std::vector< std::vector< std::vector<PatternPoint> > > geometryData;
 		    std::vector< std::bitset<RBITS> > results;
 		    std::vector< std::bitset<RBITS> > bins;
-		    std::vector<int> pairs;
+		    static std::vector<TestPair> pairs;
+		    static std::vector< std::vector<int> > data;
 		    std::vector<int> bestPairs;
 
 		    int numBits;
@@ -65,9 +77,10 @@ namespace cv{
 		    static const int ROTATION_SAMPLES = 30;
 		    static const double LOG2 = 0.693147180559945;
 		    static const float BIGGEST_RADIUS = 110.0f;
-		    static const float SCALE_SAMPLES = 30;
-		    static const float SCALE_FACTOR = 0.95f;
-		    static const float GEOMETRY_SCALE_FACTOR = 0.65f;
+		    static const float SCALE_SAMPLES = 100;
+		    static const float SCALE_FACTOR = 0.97f;
+		    // static const float GEOMETRY_SCALE_FACTOR = 0.8f;
+		    static const float GEOMETRY_SCALE_FACTOR = 0.8f;
 
 		    float smallestRadius;
 
@@ -85,7 +98,7 @@ namespace cv{
 		    void generateRandomPairs();
 		    void generateAllPairs();
 		    void increaseStatistics( const std::bitset<RBITS> r ) const;
-		    void increaseStatisticsForPair( const std::bitset<RBITS> r, int p ) const;
+		    void increaseStatisticsForPair( const std::bitset<RBITS> r, int p, int kp ) const;
 
 		    PixelTestFn test_fn_;
 

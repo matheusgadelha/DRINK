@@ -116,10 +116,10 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 		float colorAtt = 255.0f;
 		line(
 			img,
-			Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
-					 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
-			Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
-					 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
+			Point2i( img.cols/2 + d.geometryData[d.pairs[i].a][scale][rot].x,
+					 img.rows/2 + d.geometryData[d.pairs[i].a][scale][rot].y),
+			Point2i( img.cols/2 + d.geometryData[d.pairs[i].b][scale][rot].x,
+					 img.rows/2 + d.geometryData[d.pairs[i].b][scale][rot].y),
 			Scalar( 0, colorAtt, colorAtt )
 		);
 	}
@@ -169,7 +169,7 @@ int main( int argc, char* argv[])
 	integral( img1, img_sum1, CV_32S );
 	integral( img2, img_sum2, CV_32S );
 
-	Ptr<FeatureDetector> fd = new BRISK(130);
+	Ptr<FeatureDetector> fd = new ORB();
 	Ptr<DescriptorExtractor> de = new Descriptor(4,6,6,128,true);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 

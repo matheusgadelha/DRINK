@@ -19,6 +19,8 @@ INCLUDES = -I../desc
 all: tst-desc.cpp
 	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv tst-desc ../bin/
+	$(CC) train-pairs.cpp -o train-pairs $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv train-pairs ../bin/
 	
 clean:
 	cd .
