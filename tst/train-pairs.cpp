@@ -37,6 +37,8 @@
 using namespace cv;
 using namespace std;
 
+std::vector<float> columnMeanStorage;
+
 inline std::vector<std::string> glob(const std::string& pat){
     using namespace std;
     glob_t glob_result;
@@ -49,8 +51,29 @@ inline std::vector<std::string> glob(const std::string& pat){
     return ret;
 }
 
+inline
+float stdDeviation( std::vector< std::vector<unsigned char> >& data, int col )
+{
+	float mean = 0.0f;
+	float sqrd_sum = 0.0f;
+
+	for( unsigned i = 0; i < data.size(); ++i )
+	{
+		mean += data[i][col];
+	}
+	mean = mean/(float)data.size();
+
+	for( unsigned i = 0; i < data.size(); ++i )
+	{
+		sqrd_sum += pow(data[i][col] - mean, 2);
+	}
+
+	return sqrt(sqrd_sum/(float)data.size());
+}
+
 #define PAIRS Descriptor::pairs
 #define DATA Descriptor::data
+#define BEST_PAIR_NUM 64
 
 void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 {
@@ -90,42 +113,58 @@ void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 	waitKey();
 }
 
-float columnSum( std::vector< std::vector<int> > data, int c )
+float columnSum( std::vector< std::vector<unsigned char> >& data, int c )
 {
 	float result = 0.0f;
-	for( int i=0; i<data.size(); ++i )
+	for( unsigned i=0; i<data.size(); ++i )
 	{
 		result += data[i][c];
 	}
 	return result;
 }
 
-float columnMean( std::vector< std::vector<int> > data, int c )
+float columnMean( std::vector< std::vector<unsigned char> >& data, int c )
 {
 	float result = 0.0f;
-	for( int i=0; i<data.size(); ++i )
+	for( unsigned i=0; i<data.size(); ++i )
 	{
 		result += data[i][c];
 	}
 	return result/(float)data.size();
 }
 
-float correlation( std::vector< std::vector<int> > data, int a, int b )
+int maxStdDeviation( std::vector< std::vector<unsigned char> >& data )
 {
-	float a_mean = columnMean( data, a );
-	float b_mean = columnMean( data, b );
+	float current_max = 0.0f;
+	int result = 0;
+	for( unsigned i=0; i<data[0].size(); ++i )
+	{
+		float d = stdDeviation( data, i );
+		if( d > current_max )
+		{
+			current_max = d;
+			result = i;
+		}
+	}
+	return result;
+}
+
+float correlation( std::vector< std::vector<unsigned char> >& data, int a, int b )
+{
+	float a_mean = columnMeanStorage[a];
+	float b_mean = columnMeanStorage[b];
 
 	float num = 0.0f;
 	float den = 0.0f;
 
 	float a_sqrd = 0.0f, b_sqrd = 0.0f;
 
-	for( int i=0; i<data.size(); ++i )
+	for( unsigned i=0; i<data.size(); ++i )
 	{
 		num += (data[i][a]-a_mean)*(data[i][b]-b_mean);
 	}
 
-	for( int i=0; i<data.size(); ++i )
+	for( unsigned i=0; i<data.size(); ++i )
 	{
 		a_sqrd += pow( data[i][a]-a_mean, 2 );
 		b_sqrd += pow( data[i][b]-b_mean, 2 );
@@ -138,32 +177,32 @@ float correlation( std::vector< std::vector<int> > data, int a, int b )
 
 int main( int argc, char* argv[])
 {
-	if( argc < 23)
-		cout << "ERROR: No image path passed as argument.\n";
+	Mat img;
 
-	const char * img_path1 = argv[1];
-	const char * img_path2 = argv[2];
-
-	Mat img_sum1, img_sum2;
-
-	cv::Mat img1 = imread( img_path1 );
-	cv::Mat img2 = imread( img_path2 );
-
-	integral( img1, img_sum1, CV_32S );
-	integral( img2, img_sum2, CV_32S );
-
-	std::vector< std::vector<int> > data;
+	std::vector< std::vector<unsigned char> > data;
+	std::vector< std::vector<float> > correlation_matrix ( 1722, std::vector<float>(1722,0.0f) );
+	std::vector<int> bestPairs;
+	std::vector<string> img_files;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,128,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
 
 	vector<KeyPoint> kps;
 	cv::Mat descs;
 
-	fd->detect( img1, kps );
-	de->compute( img1, kps, descs);
+	img_files = glob("data/PNGImages/*.png");
+
+	cout << "Processing images..." << endl;
+	for( int i=0; i < img_files.size(); ++i )
+	{
+		img = imread( img_files[i] );
+		fd->detect( img, kps );
+		de->compute( img, kps, descs);
+		cout << "Image " << img_files[i] << " complete." << endl;
+	}
 
 	Descriptor d = *(static_cast<Ptr<Descriptor> >(de));
+	data = DATA;
 
 	// for( int i=0; i < DATA.size(); ++ i )
 	// {
@@ -174,16 +213,126 @@ int main( int argc, char* argv[])
 	// 	cout << endl;
 	// }
 
-	for( int i=0; i < DATA[0].size(); ++i )
+	// cout << "\nTraining started. Looking for best pairs..." << endl;
+	// // int firstPair = maxStdDeviation( data );
+	// // bestPairs.push_back( firstPair );
+
+	// // float t = 0.2f;
+	// for( int i=0; i<DATA[0].size(); ++i)
+	// 	columnMeanStorage.push_back( columnMean(DATA,i) );
+
+	// cout << "Creating correlation matrix...";
+	// for( unsigned i=0; i<correlation_matrix.size(); ++i )
+	// {
+	// 	for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
+	// 	{
+	// 		// cout << "Computing correlation (" << i << "," << j << ")...";
+	// 		correlation_matrix[i][j] = correlation( data, i, j );
+	// 		cout << correlation_matrix[i][j] << endl;
+	// 		// cout << "Done.\n";
+	// 	}
+	// }
+	// cout << "Done\n";
+
+	for( unsigned i=0; i<correlation_matrix.size(); ++i )
 	{
-		for( int j=0; j < DATA[0].size(); ++j )
+		for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
 		{
-			cout << correlation( DATA, i,j ) << " ";
+			float in_val;
+			cin >> in_val;
+			correlation_matrix[j][i] = correlation_matrix[i][j] = in_val;
 		}
-		cout << endl;
+	}
+  
+  int biggest_std_dev_pos = maxStdDeviation( data );
+	float threshold = 0.2f;
+	while( bestPairs.size() < BEST_PAIR_NUM )
+	{
+		int firstPair = biggest_std_dev_pos;
+		bestPairs.push_back( firstPair );
+
+		for( unsigned i=0; i<correlation_matrix.size(); ++i )
+		{
+			bool insert = true;
+			for( unsigned j=0; j < bestPairs.size(); ++j )
+			{
+				if( abs(correlation_matrix[bestPairs[j]][i]) > threshold )
+				{
+					insert = false;
+					break;
+				}
+			}
+			if( insert )
+			{
+				bestPairs.push_back( i );
+				cout << "Number od Best Pairs: " << bestPairs.size() << endl;
+			}
+			if( bestPairs.size() >= BEST_PAIR_NUM )
+			{
+				cout << "Enough Pairs! It's all over!!!\n";
+				break;
+			}
+		}
+		if( bestPairs.size() < BEST_PAIR_NUM )
+		{
+			threshold += 0.01;
+			cout << "Raised threshold to " << threshold << endl;
+			cout << "Best pairs: " << threshold << endl;
+      
+      for ( unsigned i=0; i< bestPairs.size(); ++i )
+        cout << bestPairs[i] <<", ";
+
+			bestPairs.clear();
+		}
+		else
+		{
+			break;
+		}
 	}
 
-	cout << "Number of pairs:" << PAIRS.size();
+	cout << "\n\nBest Pairs: ";
+	for ( unsigned i=0; i< bestPairs.size(); ++i )
+		cout << bestPairs[i] <<", ";
+
+	// cout << "Correlation Matrix:\n";
+	// for( unsigned i=0; i<correlation_matrix.size(); ++i )
+	// {
+	// 	for( unsigned j=0; j<correlation_matrix[i].size(); ++j )
+	// 	{
+	// 		cout << correlation_matrix[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
+
+	// for( unsigned i=0; i<data[0].size(); ++i )
+	// {
+	// 	bool insert = true;
+	// 	for( unsigned j=0; j<bestPairs.size(); ++j )
+	// 	{
+	// 		if( correlation( data, i, j ) > t )
+	// 			insert = false;
+	// 	}
+	// 	cout << ".";
+	// 	if( insert )
+	// 	{
+	// 		std::cout << "Pair " << i << " inserted." << endl;
+	// 		bestPairs.push_back( i );
+	// 	}
+	// }
+
+	// for( int i=0; i < DATA[0].size(); ++i )
+	// {
+	// 	for( int j=0; j < DATA[0].size(); ++j )
+	// 	{
+	// 		cout << correlation( DATA, i,j ) << " ";
+	// 	}
+	// 	cout << endl;
+	// }
+
+	// cout << "Number of selected pairs:" << bestPairs.size() << endl;
+	// for( unsigned i=0; i<bestPairs.size(); ++i )
+	// 	std::cout << bestPairs[i] << " ";
+	// cout << endl;
 
 	// Uncomment to show geometry =D
 	// for( int i = 0; i < 30; ++i )

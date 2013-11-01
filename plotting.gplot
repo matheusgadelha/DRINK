@@ -1,4 +1,29 @@
 set terminal png
-set output "graph.png"
-plot "./BRIEF_DRINK_Comp.data" using 1:2 title 'BRIEF' with lines, \
-	"./BRIEF_DRINK_Comp.data" using 1:3 title 'DRINK' with lines
+set output "Rotation.png"
+plot "./Rotation.data" using 1:2 title 'BRIEF' with lines, \
+	"./Rotation.data" using 1:3 title 'DRINK' with lines, \
+	"./Rotation.data" using 1:4 title 'FREAK' with lines, \
+	"./Rotation.data" using 1:5 title 'ORB' with lines
+
+set terminal png
+set output "Scale.png"
+plot "./Scale.data" using 1:2 title 'BRIEF' with lines, \
+	"./Scale.data" using 1:3 title 'DRINK' with lines, \
+	"./Scale.data" using 1:4 title 'FREAK' with lines, \
+	"./Scale.data" using 1:5 title 'ORB' with lines
+
+set terminal png
+set output "Blur.png"
+plot "./Blur.data" using 1:2 title 'BRIEF' with lines, \
+	"./Blur.data" using 1:3 title 'DRINK' with lines, \
+	"./Blur.data" using 1:4 title 'FREAK' with lines, \
+	"./Blur.data" using 1:5 title 'ORB' with lines
+
+set terminal png
+set output "Brightness.png"
+plot "./Brightness.data" using 1:2 title 'BRIEF' with lines, \
+	"./Brightness.data" using 1:3 title 'DRINK' with lines, \
+	"./Brightness.data" using 1:4 title 'FREAK' with lines, \
+	"./Brightness.data" using 1:5 title 'ORB' with lines
+
+

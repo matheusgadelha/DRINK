@@ -56,7 +56,8 @@ namespace cv{
 		    std::vector< std::bitset<RBITS> > results;
 		    std::vector< std::bitset<RBITS> > bins;
 		    static std::vector<TestPair> pairs;
-		    static std::vector< std::vector<int> > data;
+		    static std::vector<TestPair> allPairsVec;
+		    static std::vector< std::vector<unsigned char> > data;
 		    std::vector<int> bestPairs;
 
 		    int numBits;

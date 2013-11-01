@@ -154,23 +154,23 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 
 int main( int argc, char* argv[])
 {
-	if( argc < 23)
+	if( argc < 3)
 		cout << "ERROR: No image path passed as argument.\n";
 
 	const char * img_path1 = argv[1];
 	const char * img_path2 = argv[2];
 
-
 	Mat img_sum1, img_sum2;
 
 	cv::Mat img1 = imread( img_path1 );
 	cv::Mat img2 = imread( img_path2 );
+  cv::Mat img2_scaled;
 
 	integral( img1, img_sum1, CV_32S );
 	integral( img2, img_sum2, CV_32S );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,6,128,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -184,17 +184,21 @@ int main( int argc, char* argv[])
 	fd->detect( img1, kps1 );
 	de->compute( img1, kps1, descs1);
 
-	fd->detect( img2, kps2 );
-	de->compute( img2, kps2, descs2);
+  for( double scale = 1.0; scale >= 0.25; scale = scale - 0.05 )
+  {
+    cv::resize(img2, img2_scaled, cv::Size(), scale, scale);
 
-	dm->match(descs1, descs2, matches);
+    fd->detect( img2_scaled, kps2 );
+    de->compute( img2_scaled, kps2, descs2);
 
-	Mat img_matches;
-	drawMatches
+    dm->match(descs1, descs2, matches);
+
+    Mat img_matches;
+    drawMatches
     (
-       	img1, 
+        img1, 
         kps1, 
-        img2, 
+        img2_scaled, 
         kps2,
         matches, 
         img_matches, 
@@ -203,12 +207,15 @@ int main( int argc, char* argv[])
         std::vector<char>(), 
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
+    cv::imshow( "Scale Cmp", img_matches );
+    cv::waitKey();
+  }
 
-    std::cout << "Number of occurences per result\n";
-    for( int i = 0; i < Descriptor::result_statistics.size(); ++i )
-    {
-    	cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
-    }
+  //std::cout << "Number of occurences per result\n";
+  //for( int i = 0; i < Descriptor::result_statistics.size(); ++i )
+  //{
+  //  cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
+  //}
 
     // std::cout << "Binary Values\n";
     // for( int i = 0; i < static_cast< Ptr<Descriptor> >(de)->bins.size(); ++i)
@@ -216,46 +223,46 @@ int main( int argc, char* argv[])
     // 	cout << i << ": " << static_cast< Ptr<Descriptor> >(de)->bins[i] << endl;
     // }
 
-    for( int i = kps1.size(); --i; )
-    {
-	    circle(
-				img_matches,
-				Point2i( kps1[i].pt.x, kps1[i].pt.y ),
-				kps1[i].size,
-				Scalar( 0, 0, 255 )
-			); 
+  //   for( int i = kps1.size(); --i; )
+  //   {
+	 //    circle(
+		// 		img_matches,
+		// 		Point2i( kps1[i].pt.x, kps1[i].pt.y ),
+		// 		kps1[i].size,
+		// 		Scalar( 0, 0, 255 )
+		// 	); 
 
-		drawDescriptorGeometryAtKp(
-			img_matches,
-			*(static_cast< Ptr<Descriptor> >( de )),
-			round(log(kps1[i].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
-			0,
-			kps1[i]
-		);
-		std::cout << kps1[i].size << std::endl;
-    }
+		// drawDescriptorGeometryAtKp(
+		// 	img_matches,
+		// 	*(static_cast< Ptr<Descriptor> >( de )),
+		// 	round(log(kps1[i].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		// 	0,
+		// 	kps1[i]
+		// );
+		// std::cout << kps1[i].size << std::endl;
+  //   }
 
-    for( int i = kps2.size(); --i; )
-    {
-    	KeyPoint kp = kps2[i];
-    	kp.pt.x += img1.cols;
+  //   for( int i = kps2.size(); --i; )
+  //   {
+  //   	KeyPoint kp = kps2[i];
+  //   	kp.pt.x += img1.cols;
 
-	    circle(
-				img_matches,
-				Point2i( kp.pt.x, kp.pt.y ),
-				kp.size,
-				Scalar( 0, 0, 255 )
-			); 
+	 //    circle(
+		// 		img_matches,
+		// 		Point2i( kp.pt.x, kp.pt.y ),
+		// 		kp.size,
+		// 		Scalar( 0, 0, 255 )
+		// 	); 
 
-		drawDescriptorGeometryAtKp(
-			img_matches,
-			*(static_cast< Ptr<Descriptor> >( de )),
-			round(log(kp.size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
-			0,
-			kp
-		);
-		std::cout << kps1[i].size << std::endl;
-    }
+		// drawDescriptorGeometryAtKp(
+		// 	img_matches,
+		// 	*(static_cast< Ptr<Descriptor> >( de )),
+		// 	round(log(kp.size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		// 	0,
+		// 	kp
+		// );
+		// std::cout << kps1[i].size << std::endl;
+  //   }
 
     const int descriptor_type_size = ((float)static_cast< Ptr<Descriptor> >(de)->numBits/8)*
     									static_cast< Ptr<Descriptor> >(de)->numPairs;
@@ -311,12 +318,12 @@ int main( int argc, char* argv[])
 	// std::cout << std::endl;
 
 
-    imshow( "Matches", img_matches );
-	waitKey();
+  //imshow( "Matches", img_matches );
+	//waitKey();
 
-	for( int i = 0; i < 30; ++i )
-		for( int j=0; j<18; ++j)
-			showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
+	//for( int i = 0; i < 30; ++i )
+	//	for( int j=0; j<18; ++j)
+	//		showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
 
 	return 0;
 }
