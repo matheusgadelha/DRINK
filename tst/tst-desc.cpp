@@ -321,9 +321,9 @@ int main( int argc, char* argv[])
   //imshow( "Matches", img_matches );
 	//waitKey();
 
-	//for( int i = 0; i < 30; ++i )
-	//	for( int j=0; j<18; ++j)
-	//		showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
+	for( int i = 0; i < 30; ++i )
+		for( int j=0; j<100; ++j)
+			showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
 
 	return 0;
 }

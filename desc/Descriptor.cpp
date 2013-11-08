@@ -14,13 +14,37 @@ unsigned char valueAtCenter( const cv::KeyPoint& kp, cv::Mat& img )
 
 inline
 unsigned char smoothedSum(
+  const cv::Mat& img,
 	const cv::Mat& sum,
 	const cv::KeyPoint& pt, 
 	int y, 
 	int x, 
-	const int _kernelSize
+	const float _kernelSize
 ){
-    static const int HALF_KERNEL = _kernelSize/2;
+    const int& imagecols = img.cols;
+    if( _kernelSize < 0.5f )
+    {
+      // interpolation multipliers:
+      const int r_x = static_cast<int>((int)pt.pt.x*1024);
+      const int r_y = static_cast<int>((int)pt.pt.y*1024);
+      const int r_x_1 = (1024-r_x);
+      const int r_y_1 = (1024-r_y);
+      uchar* ptr = img.data+((int)pt.pt.x+x)+((int)pt.pt.y+y)*imagecols;
+      unsigned int ret_val;
+      // linear interpolation:
+      ret_val = (r_x_1*r_y_1*int(*ptr));
+      ptr++;
+      ret_val += (r_x*r_y_1*int(*ptr));
+      ptr += imagecols;
+      ret_val += (r_x*r_y*int(*ptr));
+      ptr--;
+      ret_val += (r_x_1*r_y*int(*ptr));
+      //return the rounded mean
+      ret_val += 2 * 1024 * 1024;
+      return static_cast<uchar>(ret_val / (4 * 1024 * 1024));
+    }
+
+    static const int HALF_KERNEL = (_kernelSize+0.5)/2;
 
     int img_y = (int)(pt.pt.y) + y;
     int img_x = (int)(pt.pt.x) + x;
@@ -28,7 +52,8 @@ unsigned char smoothedSum(
            - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
            - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
            + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
-    return (unsigned char) val;
+
+    return (unsigned char)val;
 }
 
 inline
@@ -62,6 +87,7 @@ float stdDeviation( std::vector<int> dist, int size )
 namespace cv{
 
 	std::vector< int > Descriptor::result_statistics;
+  std::vector< int > Descriptor::patternSizes;
 	std::vector< std::vector<int> > Descriptor::pair_result_statistics;
 	std::vector<Descriptor::TestPair> Descriptor::pairs;
 	std::vector<Descriptor::TestPair> Descriptor::allPairsVec;
@@ -95,6 +121,11 @@ namespace cv{
 		b = 0;
 	}
 
+  float Descriptor::l2Distance( PatternPoint a, PatternPoint b )
+  {
+    return sqrt( pow(a.x-b.x,2) + pow(a.y-b.y,2) );
+  }
+
 	Descriptor::Descriptor( int _numBits = 4, int _ringSize = 8, int _numRings = 4, int _pairs = 64, bool _allPairs = false )
 	{
       numBits = _numBits;
@@ -106,39 +137,40 @@ namespace cv{
       radiusStep = BIGGEST_RADIUS / numRings;
       firstRadius = radiusStep;
 
-      int raw_pairs[] = { 0, 2, 11, 42, 53, 85, 89, 131, 168, 172, 210, 221, 252, 263, 300, 337, 347, 379, 398, 425, 426, 462, 504, 515, 551, 588, 599, 630, 641, 674, 683, 717, 722, 757, 758, 762, 804, 842, 855, 893, 896, 924, 926, 929, 977, 1009, 1010, 1011, 1055, 1102, 1135, 1143, 1145, 1187, 1219, 1222, 1261, 1308, 1346, 1349, 1386, 1387, 1391, 1431
-      //	   0,  1,  2,  3,  4,  5, 10, 11, 18,
-      //	  19, 20, 38, 42, 43, 44, 46, 47,
-      //	  53, 59, 60, 73, 84, 85, 88, 89,
-      //	  95, 99, 100, 104, 126, 127, 130, 131,
-      //	 137, 140, 144, 145, 158, 168, 172, 173,
-      //	 179, 181, 185, 186, 199, 210, 211, 214,
-      //	 215, 221, 224, 225, 226, 235, 243, 252,
-      //	 253, 254, 257, 258, 263, 268, 271, 281,
-      //	 294, 295, 298, 299, 300, 305, 316, 320,
-      //	 336, 337, 338, 339, 341, 342, 347, 352,
-      //	 360, 378, 379, 383, 384, 389, 392, 393,
-      //	 397, 420, 421, 422, 424, 425, 426, 431,
-      //	 435, 442, 462, 463, 465, 467, 473, 476, 
-      //	 478, 489, 506, 509, 514, 515, 517, 519,
-      //	 546, 547, 550, 551, 557, 560, 564, 588,
-      //	 589, 592, 593, 597, 599, 602, 603, 634,
-      //	 635, 641, 643, 644, 645, 672, 676, 677,
-      //	 679, 680, 683, 690, 693, 714, 715, 718,
-      //	 719, 725, 729, 732, 733, 756, 757, 758,
-      //	 761, 762, 763, 764, 767, 769, 771, 798,
-      //	 799, 803, 804, 809, 812, 814, 840, 841,
-      //	 842, 843, 845, 846, 849, 851, 860, 882,
-      //	 883, 887, 888, 889, 893, 895, 896, 897,
-      //	 924, 928, 929, 930, 931, 932, 935, 966,
-      //	 967, 969, 971, 974, 977, 982, 1008, 1010,
-      //	1012, 1013, 1015, 1016, 1019, 1021, 1022, 1050,
-      //	1054, 1055, 1057, 1058, 1061, 1092, 1093, 1094,
-      //	1096, 1097, 1103, 1136, 1138, 1139, 1141, 1142,
-      //	1145, 1147, 1176, 1179, 1180, 1181, 1183, 1187,
-      //	1220, 1222, 1223, 1227, 1229, 1260, 1261, 1262,
-      //	1265, 1270, 1302, 1305, 1307, 1308, 1310, 1346,
-      //	1347, 1350, 1386, 1387, 1390, 1391, 1392
+      int raw_pairs[] = { 
+      0, 2, 11, 42, 53, 85, 89, 131, 168, 172, 210, 221, 252, 263, 300, 337, 347, 379, 398, 425, 426, 462, 504, 515, 551, 588, 599, 630, 641, 674, 683, 717, 722, 757, 758, 762, 804, 842, 855, 893, 896, 924, 926, 929, 977, 1009, 1010, 1011, 1055, 1102, 1135, 1143, 1145, 1187, 1219, 1222, 1261, 1308, 1346, 1349, 1386, 1387, 1391, 1431
+     //    0,  1,  2,  3,  4,  5, 10, 11, 18,
+     //   19, 20, 38, 42, 43, 44, 46, 47,
+     //   53, 59, 60, 73, 84, 85, 88, 89,
+     //   95, 99, 100, 104, 126, 127, 130, 131,
+     //  137, 140, 144, 145, 158, 168, 172, 173,
+     //  179, 181, 185, 186, 199, 210, 211, 214,
+     //  215, 221, 224, 225, 226, 235, 243, 252,
+     //  253, 254, 257, 258, 263, 268, 271, 281,
+     //  294, 295, 298, 299, 300, 305, 316, 320,
+     //  336, 337, 338, 339, 341, 342, 347, 352,
+     //  360, 378, 379, 383, 384, 389, 392, 393,
+     //  397, 420, 421, 422, 424, 425, 426, 431,
+     //  435, 442, 462, 463, 465, 467, 473, 476, 
+     //  478, 489, 506, 509, 514, 515, 517, 519,
+     //  546, 547, 550, 551, 557, 560, 564, 588,
+     //  589, 592, 593, 597, 599, 602, 603, 634,
+     //  635, 641, 643, 644, 645, 672, 676, 677,
+     //  679, 680, 683, 690, 693, 714, 715, 718,
+     //  719, 725, 729, 732, 733, 756, 757, 758,
+     //  761, 762, 763, 764, 767, 769, 771, 798,
+     //  799, 803, 804, 809, 812, 814, 840, 841,
+     //  842, 843, 845, 846, 849, 851, 860, 882,
+     //  883, 887, 888, 889, 893, 895, 896, 897,
+     //  924, 928, 929, 930, 931, 932, 935, 966,
+     //  967, 969, 971, 974, 977, 982, 1008, 1010,
+     // 1012, 1013, 1015, 1016, 1019, 1021, 1022, 1050,
+     // 1054, 1055, 1057, 1058, 1061, 1092, 1093, 1094,
+     // 1096, 1097, 1103, 1136, 1138, 1139, 1141, 1142,
+     // 1145, 1147, 1176, 1179, 1180, 1181, 1183, 1187,
+     // 1220, 1222, 1223, 1227, 1229, 1260, 1261, 1262,
+     // 1265, 1270, 1302, 1305, 1307, 1308, 1310, 1346,
+     // 1347, 1350, 1386, 1387, 1390, 1391, 1392
       };
 
       for( int i=0; i<sizeof(raw_pairs)/sizeof(int); ++i )
@@ -148,7 +180,8 @@ namespace cv{
 
       geometryData.resize( ringSize*numRings );
 
-      for( int i=0; i < ringSize*numRings; ++i ) geometryData[i].resize( SCALE_SAMPLES );
+      for( int i=0; i < ringSize*numRings; ++i ) 
+        geometryData[i].resize( SCALE_SAMPLES );
 
       for( int i=0; i < ringSize*numRings; ++i )
         for( int j=0; j < SCALE_SAMPLES; ++j )
@@ -166,6 +199,14 @@ namespace cv{
         // 	pairs.push_back( allPairsVec[i] );
         // }
         pairs = allPairsVec;
+        for( unsigned i=0; i < pairs.size(); ++i )
+        {
+          std::cout << l2Distance( 
+            geometryData[pairs[i].a][0][0],
+            geometryData[pairs[i].b][0][0] 
+          );
+        }
+
         std::cout << pairs.size() << std::endl;
       }
       else
@@ -174,21 +215,13 @@ namespace cv{
         {
           pairs.push_back(allPairsVec[bestPairs[i]]);
         }
+        
+//        selectPairs( 100.0f, 150.0f );
+        std::cout << pairs.size();
       }
 
       generateResults();
 
-    }
-
-    void Descriptor::init( int _numBits, int _ringSize, int _numRings )
-    {
-      // numBits  = _numBits;
-      // ringSize = _ringSize;
-      // numRings = _numRings;
-
-      // geometryData = new Point2i[ringSize*numRings];
-      // generateGeometry();
-      // generateResults();
     }
 
     void Descriptor::generateRandomPairs()
@@ -243,13 +276,18 @@ namespace cv{
             p.y = round( sin(PI/ringSize) * float(np.x) +
                 cos(PI/ringSize) * float(np.y) );
           }
-          p.sigma = round( sigma_sample*0.7f );
+          p.sigma = sigma_sample*0.7f;
           geometryData[ i + i_ring*ringSize ][0][0] = p;
           numPoints++;
         }
       }
 
       // SCALE SAMPLES
+      for( int i_scale = 0; i_scale < SCALE_SAMPLES; ++i_scale )
+      {
+        float sclFactor = pow( SCALE_FACTOR, i_scale );
+        patternSizes.push_back(BIGGEST_RADIUS * sclFactor);
+      }
       for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
       {
         for( int i_scale = 1; i_scale < SCALE_SAMPLES; ++i_scale )
@@ -280,6 +318,27 @@ namespace cv{
       }
     }
 
+    void Descriptor::selectPairs( float _delta_min, float _delta_max )
+    {
+      pairs.clear();
+      for( unsigned i=0; i < allPairsVec.size(); ++i )
+      {
+        if( l2Distance(
+              geometryData[allPairsVec[i].a][0][0],
+              geometryData[allPairsVec[i].b][0][0]
+            ) < _delta_max && 
+            l2Distance(
+              geometryData[allPairsVec[i].a][0][0],
+              geometryData[allPairsVec[i].b][0][0]
+            ) > _delta_min
+          )
+        {
+          this->pairs.push_back( allPairsVec[i] );
+        }
+        if( this->pairs.size() >= 64) break;
+      }
+    }
+
     void Descriptor::generateResults()
     {
       for(int i=0; i<RBITS+1; ++i)
@@ -293,7 +352,7 @@ namespace cv{
           pair_result_statistics[j].push_back(0);
       }
 
-      float alpha = 0.015f;
+      float alpha = 0.075f;
       int disp = numBits/2;
       for( int i = -255; i <= 255; ++i )
       {
@@ -339,42 +398,60 @@ namespace cv{
       std::vector<KeyPoint>& keypoints,
       Mat& descriptors ) const
     {
-        Mat sum;
+      Mat sum;
 
-        Mat grayImage = image;
-        if( image.type() != CV_8U ) cvtColor( image, grayImage, CV_BGR2GRAY );
+      Mat grayImage = image;
+      if( image.type() != CV_8U ) cvtColor( image, grayImage, CV_BGR2GRAY );
 
-        integral( grayImage, sum, CV_32S );
+      integral( grayImage, sum, CV_32S );
 
-        //KeyPointsFilter::runByImageBorder(keypoints, image.size(), BIGGEST_RADIUS+geometryData[0][0][0].sigma);
+      //KeyPointsFilter::runByImageBorder(keypoints, image.size(), BIGGEST_RADIUS+geometryData[0][0][0].sigma);
 
-        const int descriptor_type_size = ((float)numBits/8)*pairs.size();
-        descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
+      const int descriptor_type_size = ((float)numBits/8)*pairs.size();
+      descriptors = Mat::zeros((int)keypoints.size(), descriptor_type_size, CV_8U);
+      const std::vector<cv::KeyPoint>::iterator kpBegin = keypoints.begin();
 
-        float conversion_rot = ROTATION_SAMPLES/360.0f;
-        float log_scale_factor = 1/log(SCALE_FACTOR);
-        float inv_biggest_radius = 1/BIGGEST_RADIUS;
+      std::vector<int> kpScales( keypoints.size() );
+      const std::vector<int>::iterator scaleBegin = kpScales.begin();
 
-        for( unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp )
+      float conversion_rot = ROTATION_SAMPLES/360.0f;
+      float log_scale_factor = 1/log(SCALE_FACTOR);
+      float inv_biggest_radius = 1/BIGGEST_RADIUS;
+
+      for( size_t i_kp = 0; i_kp < keypoints.size(); ++i_kp )
+      {
+        kpScales[i_kp] = round(log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor);
+        if( keypoints[i_kp].pt.x <= patternSizes[kpScales[i_kp]] || //check if the description at this specific position and scale fits inside the image
+            keypoints[i_kp].pt.y <= patternSizes[kpScales[i_kp]] ||
+            keypoints[i_kp].pt.x >= image.cols-patternSizes[kpScales[i_kp]] ||
+            keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]]
+          )
         {
-            uchar* desc = descriptors.ptr(i_kp);
-            const KeyPoint& pt = keypoints[i_kp];
+          keypoints.erase(kpBegin+i_kp);
+          kpScales.erase(scaleBegin+i_kp);
+        }
+      }
 
-            if( allPairs )data.push_back( std::vector<unsigned char>(1722,0) );
+      // Iterates over all keypoints
+      for( unsigned int i_kp = 0; i_kp < keypoints.size(); ++i_kp )
+      {
+        uchar* desc = descriptors.ptr(i_kp);
+        const KeyPoint& pt = keypoints[i_kp];
 
-            int pt_scale = round(log(pt.size*inv_biggest_radius)*log_scale_factor);
-            // int pt_scale = 0;
+        if( allPairs )data.push_back( std::vector<unsigned char>(1722,0) );
+
+        // int pt_scale = 0;
         // std::cout << "Calculated scale: " << pt_scale << std::endl;
-            // std::cout << "KeyPoint size: " << pt.size << std::endl;
-            // std::cout << "---" << std::endl ;
+        // std::cout << "KeyPoint size: " << pt.size << std::endl;
+        // std::cout << "---" << std::endl ;
 
-            int rot_idx = pt.angle*conversion_rot;
-            // int rot_idx = 0;
-            // std::cout << rot_idx << std::endl;
+        int rot_idx = pt.angle*conversion_rot;
+        // int rot_idx = 0;
+        // std::cout << rot_idx << std::endl;
 
-            // std::cout << pt.octave << " " << pt.size << std::endl;
+        // std::cout << pt.octave << " " << pt.size << std::endl;
 
-            // std::cout << "rot_idx " << rot_idx << std::endl; 
+        // std::cout << "rot_idx " << rot_idx << std::endl; 
 
         // unsigned char center = smoothedSum(
         // 	sum,
@@ -396,13 +473,27 @@ namespace cv{
             bit_count = 0;
           }
 
-          unsigned char center = smoothedSum(
-            sum,
-            pt,
-            geometryData[pairs[i].a][pt_scale][rot_idx].x,
-            geometryData[pairs[i].a][pt_scale][rot_idx].y,
-            geometryData[pairs[i].a][pt_scale][rot_idx].sigma
-          );
+          unsigned char center;
+          if(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma < 1)
+          {
+            center = valueAt(
+              pt,
+              Point2i(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].x,
+                geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].y ),
+              grayImage
+            );
+          }
+          else
+          {
+            center = smoothedSum(
+              grayImage,
+              sum,
+              pt,
+              geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].x,
+              geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].y,
+              geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma
+            );
+          }
 
           // unsigned char center = valueAt(
           // 	pt,
@@ -416,37 +507,51 @@ namespace cv{
           // 	grayImage
           // );
 
-          unsigned char cpoint = smoothedSum(
-            sum,
-            pt,
-            geometryData[pairs[i].b][pt_scale][rot_idx].x,
-            geometryData[pairs[i].b][pt_scale][rot_idx].y,
-            geometryData[pairs[i].b][pt_scale][rot_idx].sigma
-          );
+          unsigned char cpoint;
+          if(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].sigma < 1)
+          {
+            cpoint = valueAt(
+              pt,
+              Point2i(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].x,
+                geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].y ),
+              grayImage
+            );
+          }
+          else
+          {
+            cpoint = smoothedSum(
+              grayImage,
+              sum,
+              pt,
+              geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].x,
+              geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].y,
+              geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].sigma
+            );
+          }
 
           unsigned char raw_value = 0;
           unsigned char diff = 0;
 
-              if( center > cpoint ){
-                diff = center - cpoint;
-                raw_value = bins[255+diff].to_ulong();
-              }
-              else
-              {
-                diff = cpoint - center;
-                raw_value = bins[255-diff].to_ulong();
-              }
+          if( center > cpoint ){
+            diff = center - cpoint;
+            raw_value = bins[255+diff].to_ulong();
+          }
+          else
+          {
+            diff = cpoint - center;
+            raw_value = bins[255-diff].to_ulong();
+          }
 
-              // increaseStatistics( raw_value );
-              // if( allPairs)
-              // {
-              // 	increaseStatisticsForPair( raw_value, i, data.size()-1 );
-              // }
+          // increaseStatistics( raw_value );
+          // if( allPairs)
+          // {
+          // 	increaseStatisticsForPair( raw_value, i, data.size()-1 );
+          // }
 
-              bit_count += numBits;
+          bit_count += numBits;
 
-              desc[inserted_chars] += ( raw_value << (8-bit_count) );
-            }
+          desc[inserted_chars] += ( raw_value << (8-bit_count) );
+        }
 
             // std::cout << "INSERTED CHARS:" << inserted_chars+1 << std::endl;
 
@@ -456,7 +561,7 @@ namespace cv{
             // 	// std::cout << (int)desc[i] << " ";
             // }
             // std::cout << std::endl;
-        }
+      }
 
         // std::cout <<"PAIR STAT SIZE: " << pair_result_statistics.size() << std::endl;
         // std::cout <<"PAIR STAT PER ELEMENT SIZE: " << pair_result_statistics[1].size() << std::endl;

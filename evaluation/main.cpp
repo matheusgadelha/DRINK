@@ -26,7 +26,7 @@ const bool USE_VERBOSE_TRANSFORMATIONS = false;
 
 int main(int argc, const char* argv[])
 {
-    cv::Descriptor::init();
+    //cv::Descriptor::init();
     
     std::vector<FeatureAlgorithm>              algorithms;
     std::vector<cv::Ptr<ImageTransformation> > transformations;
