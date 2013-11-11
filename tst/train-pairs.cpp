@@ -39,6 +39,24 @@ using namespace std;
 
 std::vector<float> columnMeanStorage;
 
+struct PairData
+{
+	PairData( int _idx, float _stdDeviation )
+	{
+		idx = _idx;
+		stdDeviation = _stdDeviation;
+	}
+	int idx;
+	float stdDeviation;
+};
+
+struct sortPairs
+{
+	bool operator()( const PairData& a, const PairData& b ) const {
+        return a.stdDeviation < b.stdDeviation;
+    }
+};
+
 inline std::vector<std::string> glob(const std::string& pat){
     using namespace std;
     glob_t glob_result;
@@ -193,7 +211,7 @@ int main( int argc, char* argv[])
 	img_files = glob("data/PNGImages/*.png");
 
 	cout << "Processing images..." << endl;
-	for( int i=0; i < img_files.size(); ++i )
+	for( size_t i=0; i < img_files.size(); ++i )
 	{
 		img = imread( img_files[i] );
 		fd->detect( img, kps );
@@ -243,20 +261,36 @@ int main( int argc, char* argv[])
 			correlation_matrix[j][i] = correlation_matrix[i][j] = in_val;
 		}
 	}
-  
-  int biggest_std_dev_pos = maxStdDeviation( data );
+
+	cout << "Computing standard deviation for all pairs...\n";
+	std::vector<PairData> ordered_pairs;
+	for( size_t i=0; i<data[0].size(); ++i )
+	{
+		ordered_pairs.push_back(PairData( i, stdDeviation( data, i )));
+		cout << 100.0f*i/(float)data[0].size() << "\%\n";
+	}
+
+	for( size_t i=0; i<ordered_pairs.size(); ++i )
+	{
+		cout << i << ": " << ordered_pairs[i].stdDeviation << endl;
+	}
+
+	cout << "Sorting pairs according to standard deviation...\n";
+	std::sort( ordered_pairs.begin(), ordered_pairs.end(), sortPairs() );
+
+	cout << "Training started...";
 	float threshold = 0.2f;
 	while( bestPairs.size() < BEST_PAIR_NUM )
 	{
-		int firstPair = biggest_std_dev_pos;
+		int firstPair = ordered_pairs[0].idx;
 		bestPairs.push_back( firstPair );
 
-		for( unsigned i=0; i<correlation_matrix.size(); ++i )
+		for( unsigned i=0; i<ordered_pairs.size(); ++i )
 		{
 			bool insert = true;
 			for( unsigned j=0; j < bestPairs.size(); ++j )
 			{
-				if( abs(correlation_matrix[bestPairs[j]][i]) > threshold )
+				if( abs(correlation_matrix[bestPairs[j]][ ordered_pairs[i].idx ]) > threshold )
 				{
 					insert = false;
 					break;
@@ -264,8 +298,8 @@ int main( int argc, char* argv[])
 			}
 			if( insert )
 			{
-				bestPairs.push_back( i );
-				cout << "Number od Best Pairs: " << bestPairs.size() << endl;
+				bestPairs.push_back( ordered_pairs[i].idx );
+				cout << "Number of Best Pairs: " << bestPairs.size() << endl;
 			}
 			if( bestPairs.size() >= BEST_PAIR_NUM )
 			{
@@ -279,8 +313,8 @@ int main( int argc, char* argv[])
 			cout << "Raised threshold to " << threshold << endl;
 			cout << "Best pairs: " << threshold << endl;
       
-      for ( unsigned i=0; i< bestPairs.size(); ++i )
-        cout << bestPairs[i] <<", ";
+	     	for ( unsigned i=0; i< bestPairs.size(); ++i )
+	        	cout << bestPairs[i] <<", ";
 
 			bestPairs.clear();
 		}

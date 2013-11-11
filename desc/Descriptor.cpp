@@ -21,28 +21,29 @@ unsigned char smoothedSum(
 	int x, 
 	const float _kernelSize
 ){
-    const int& imagecols = img.cols;
-    if( _kernelSize < 0.5f )
-    {
-      // interpolation multipliers:
-      const int r_x = static_cast<int>((int)pt.pt.x*1024);
-      const int r_y = static_cast<int>((int)pt.pt.y*1024);
-      const int r_x_1 = (1024-r_x);
-      const int r_y_1 = (1024-r_y);
-      uchar* ptr = img.data+((int)pt.pt.x+x)+((int)pt.pt.y+y)*imagecols;
-      unsigned int ret_val;
-      // linear interpolation:
-      ret_val = (r_x_1*r_y_1*int(*ptr));
-      ptr++;
-      ret_val += (r_x*r_y_1*int(*ptr));
-      ptr += imagecols;
-      ret_val += (r_x*r_y*int(*ptr));
-      ptr--;
-      ret_val += (r_x_1*r_y*int(*ptr));
-      //return the rounded mean
-      ret_val += 2 * 1024 * 1024;
-      return static_cast<uchar>(ret_val / (4 * 1024 * 1024));
-    }
+    // Interpolation code for sigma < 0.5
+    // const int& imagecols = img.cols;
+    // if( _kernelSize < 0.5f )
+    // {
+    //   // interpolation multipliers:
+    //   const int r_x = static_cast<int>((int)pt.pt.x*1024);
+    //   const int r_y = static_cast<int>((int)pt.pt.y*1024);
+    //   const int r_x_1 = (1024-r_x);
+    //   const int r_y_1 = (1024-r_y);
+    //   uchar* ptr = img.data+((int)pt.pt.x+x)+((int)pt.pt.y+y)*imagecols;
+    //   unsigned int ret_val;
+    //   // linear interpolation:
+    //   ret_val = (r_x_1*r_y_1*int(*ptr));
+    //   ptr++;
+    //   ret_val += (r_x*r_y_1*int(*ptr));
+    //   ptr += imagecols;
+    //   ret_val += (r_x*r_y*int(*ptr));
+    //   ptr--;
+    //   ret_val += (r_x_1*r_y*int(*ptr));
+    //   //return the rounded mean
+    //   ret_val += 2 * 1024 * 1024;
+    //   return static_cast<uchar>(ret_val / (4 * 1024 * 1024));
+    // }
 
     static const int HALF_KERNEL = (_kernelSize+0.5)/2;
 
@@ -137,8 +138,9 @@ namespace cv{
       radiusStep = BIGGEST_RADIUS / numRings;
       firstRadius = radiusStep;
 
-      int raw_pairs[] = { 
-      0, 2, 11, 42, 53, 85, 89, 131, 168, 172, 210, 221, 252, 263, 300, 337, 347, 379, 398, 425, 426, 462, 504, 515, 551, 588, 599, 630, 641, 674, 683, 717, 722, 757, 758, 762, 804, 842, 855, 893, 896, 924, 926, 929, 977, 1009, 1010, 1011, 1055, 1102, 1135, 1143, 1145, 1187, 1219, 1222, 1261, 1308, 1346, 1349, 1386, 1387, 1391, 1431
+      int raw_pairs[] = {
+       548, 711, 921, 1680, 1595, 1638, 1553, 1717, 1596, 296, 1128, 886, 925, 930, 1214, 760, 1514, 1170, 1385, 723, 804, 1127, 1169, 1044, 762, 1302, 1223, 1086, 1427, 671, 375, 1013, 683, 1178, 506, 713, 467, 582, 539, 459, 587, 1038, 1080, 88, 415, 414, 825, 977, 47, 372, 5, 451, 331, 431, 172, 1149, 193, 1141, 305, 1191, 870, 137, 11, 1668
+       // 0, 2, 11, 42, 53, 85, 89, 131, 168, 172, 210, 221, 252, 263, 300, 337, 347, 379, 398, 425, 426, 462, 504, 515, 551, 588, 599, 630, 641, 674, 683, 717, 722, 757, 758, 762, 804, 842, 855, 893, 896, 924, 926, 929, 977, 1009, 1010, 1011, 1055, 1102, 1135, 1143, 1145, 1187, 1219, 1222, 1261, 1308, 1346, 1349, 1386, 1387, 1391, 1431
      //    0,  1,  2,  3,  4,  5, 10, 11, 18,
      //   19, 20, 38, 42, 43, 44, 46, 47,
      //   53, 59, 60, 73, 84, 85, 88, 89,
@@ -192,7 +194,7 @@ namespace cv{
 
       if( _allPairs )
       {
-        std::cout << allPairsVec.size() << std::endl;
+        // std::cout << allPairsVec.size() << std::endl;
 
         // for( int i=0; i < allPairsVec.size(); ++i )
         // {
@@ -276,7 +278,7 @@ namespace cv{
             p.y = round( sin(PI/ringSize) * float(np.x) +
                 cos(PI/ringSize) * float(np.y) );
           }
-          p.sigma = sigma_sample*0.7f;
+          p.sigma = (sigma_sample*0.7f);
           geometryData[ i + i_ring*ringSize ][0][0] = p;
           numPoints++;
         }
@@ -474,7 +476,7 @@ namespace cv{
           }
 
           unsigned char center;
-          if(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma < 1)
+          if(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma <= 1)
           {
             center = valueAt(
               pt,
@@ -508,7 +510,7 @@ namespace cv{
           // );
 
           unsigned char cpoint;
-          if(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].sigma < 1)
+          if(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].sigma <= 1)
           {
             cpoint = valueAt(
               pt,
@@ -543,10 +545,10 @@ namespace cv{
           }
 
           // increaseStatistics( raw_value );
-          // if( allPairs)
-          // {
-          // 	increaseStatisticsForPair( raw_value, i, data.size()-1 );
-          // }
+          if( allPairs)
+          {
+          	increaseStatisticsForPair( raw_value, i, data.size()-1 );
+          }
 
           bit_count += numBits;
 

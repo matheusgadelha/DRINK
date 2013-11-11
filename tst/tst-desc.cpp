@@ -99,7 +99,7 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
 					 img.rows/2 + d.geometryData[i][scale][rot].y),
 			1,
-			Scalar( 255, 255, 0)
+			Scalar( 255, 255, 0 )
 		);
 
 		circle(
@@ -107,7 +107,7 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
 					 img.rows/2 + d.geometryData[i][scale][rot].y),
 			d.geometryData[i][scale][rot].sigma,
-			Scalar( 0, 0, 255)
+			Scalar( 0, 0, 255 )
 		);
 	}
 
@@ -164,13 +164,13 @@ int main( int argc, char* argv[])
 
 	cv::Mat img1 = imread( img_path1 );
 	cv::Mat img2 = imread( img_path2 );
-  cv::Mat img2_scaled;
+  	cv::Mat img2_scaled;
 
 	integral( img1, img_sum1, CV_32S );
 	integral( img2, img_sum2, CV_32S );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,false);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;

@@ -25,7 +25,6 @@ namespace cv{
 				int x;
 				int y;
 				float sigma;
-				int sigmaSqrd;
 			};
 
 			struct TestPair
@@ -72,7 +71,6 @@ namespace cv{
 		    static const int scales = 8;
 
 		    static const int ROTATION_SAMPLES = 30;
-		    static const double LOG2 = 0.693147180559945;
 		    static const float BIGGEST_RADIUS = 200.0f;
 		    static const float SCALE_SAMPLES = 100;
 		    static const float SCALE_FACTOR = 0.97f;

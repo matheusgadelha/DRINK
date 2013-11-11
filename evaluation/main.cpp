@@ -21,7 +21,6 @@ string itos(int i) // convert int to string
     return s.str();
 }
 
-
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
 
 int main(int argc, const char* argv[])
