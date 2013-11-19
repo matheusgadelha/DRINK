@@ -170,7 +170,7 @@ int main( int argc, char* argv[])
 	integral( img2, img_sum2, CV_32S );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,false);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,5,4,64,true);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
