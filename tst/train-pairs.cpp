@@ -133,7 +133,7 @@ float stdDeviation( std::vector< std::vector<unsigned char> >& data, int col )
 
 #define PAIRS Descriptor::pairs
 #define DATA Descriptor::data
-#define BEST_PAIR_NUM 64
+#define BEST_PAIR_NUM 128
 
 void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 {
@@ -240,7 +240,7 @@ int main( int argc, char* argv[])
 	Mat img;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,5,4,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
 
 	std::vector< std::vector<unsigned char> > data;
 	std::vector<int> bestPairs;
@@ -249,7 +249,8 @@ int main( int argc, char* argv[])
 	vector<KeyPoint> kps;
 	cv::Mat descs;
 
-	img_files = glob("data/PNGImages/*.png");
+	img_files = glob("data/graf/*.ppm");
+	cout << img_files.size() << endl;
 
 	cout << "Processing images..." << endl;
 	for( size_t i=0; i < img_files.size(); ++i )
@@ -275,19 +276,18 @@ int main( int argc, char* argv[])
 	// for( int i=0; i<DATA[0].size(); ++i)
 	// 	columnMeanStorage.push_back( columnMean(DATA,i) );
 
-	// cout << "Creating correlation matrix...";
-	// for( unsigned i=0; i<correlation_matrix.size(); ++i )
-	// {
-	// 	for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
-	// 	{
-	// 		// cout << "Computing correlation (" << i << "," << j << ")...";
-	// 		correlation_matrix[i][j] = correlation( data, i, j );
-	// 		cout << correlation_matrix[i][j] << " ";
-	// 		// cout << "Done.\n";
-	// 	}
-	// 	cout << endl;
-	// }
-	// cout << "Done\n";
+	cout << "Creating correlation matrix...";
+	for( unsigned i=0; i<correlation_matrix.size(); ++i )
+	{
+		for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
+		{
+			correlation_matrix[i][j] = correlation( data, i, j );
+			correlation_matrix[j][i] = correlation_matrix[i][j];
+			cout << correlation_matrix[i][j] << " ";
+		}
+		cout << endl;
+	}
+	cout << "Done\n";
 
 	for( unsigned i=0; i<correlation_matrix.size(); ++i )
 	{
@@ -314,7 +314,6 @@ int main( int argc, char* argv[])
 		// PairData p( i, 0.0f );
 		for( size_t j=0; j<PAIRS[i].resultCount.size(); ++j )
 		{
-			cout << "j: " << j << endl;
 			p.dist[j] = PAIRS[i].resultCount[j]/numTests;
 		}
 		ordered_pairs.push_back(p);

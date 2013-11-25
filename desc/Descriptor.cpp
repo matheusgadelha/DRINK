@@ -45,10 +45,13 @@ unsigned char smoothedSum(
     //   return static_cast<uchar>(ret_val / (4 * 1024 * 1024));
     // }
 
-    static const int HALF_KERNEL = (_kernelSize+0.5)/2;
+    // std::cout << "SMOTHED KERNEL " << _kernelSize/2;
+    int HALF_KERNEL = _kernelSize/2;
 
     int img_y = (int)(pt.pt.y) + y;
     int img_x = (int)(pt.pt.x) + x;
+    std::cout << "DIMENSIONS: " << img.cols << " " << img.rows << std::endl;
+    std::cout << img_x << " " << img_y << " " << HALF_KERNEL << std::endl;
     int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
            - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
            - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
@@ -153,6 +156,7 @@ namespace cv{
         // 286, 16, 1, 287, 364, 57, 94, 39, 79, 0, 290, 128, 149, 3, 78, 40, 370, 58, 178, 119, 115, 169, 77, 160, 156, 297, 4, 155, 116, 206, 140, 101, 374, 341, 260, 139, 239, 224, 300, 223, 103, 208, 295, 283, 238, 301, 360, 335, 67, 284, 122, 86, 336, 182, 337, 157, 112, 225, 236, 202, 158, 126, 376, 245
         // 277, 258, 318, 226, 278, 217, 127, 261, 377, 218, 240, 108, 121, 163, 320, 246, 340, 86, 216, 200, 284, 207, 212, 267, 379, 201, 283, 204, 264, 243, 51, 300, 224, 273, 199, 341, 184, 265, 130, 214, 209, 138, 266, 165, 215, 333, 116, 155, 164, 297, 197, 83, 179, 24, 100, 44, 21, 96, 40, 175, 136, 233, 76, 0
        // STD SORTING
+        // 302, 303, 261, 344, 262, 343, 176, 217, 56, 218, 177, 97, 98, 57, 301, 256, 135, 260, 341, 258, 338, 15, 136, 298, 12, 342, 340, 88, 214, 13, 257, 16, 299, 173, 138, 224, 47, 131, 183, 246, 300, 378, 335, 10, 194, 130, 139, 293, 259, 339, 235, 320, 373, 53, 46, 175, 179, 330, 215, 264, 95, 221, 94, 216, 140, 220, 305, 55, 379, 209, 83, 96, 0, 334, 304, 180, 190, 231, 54, 312, 263, 17, 347, 311, 142, 269, 100, 137, 11, 213, 174, 93, 248, 59, 133, 185, 354, 226, 134, 278, 14, 19, 227, 353, 270, 184, 143, 153, 22, 233, 361, 60, 204, 58, 101, 73, 244, 114, 149, 275, 30, 107, 359, 357, 156, 111, 32, 325
         // 548, 711, 1680, 1595, 1128, 922, 1213, 801, 1133, 1514, 1170, 1719, 1002, 1385, 1264, 1169, 762, 1281, 506, 1055, 256, 665, 88, 415, 299, 414, 372, 331, 247, 330, 347, 11
          548, 711, 921, 1680, 1595, 1638, 1553, 1717, 1596, 296, 1128, 886, 925, 930, 1214, 760, 1514, 1170, 1385, 723, 804, 1127, 1169, 1044, 762, 1302, 1223, 1086, 1427, 671, 375, 1013, 683, 1178, 506, 713, 467, 582, 539, 459, 587, 1038, 1080, 88, 415, 414, 825, 977, 47, 372, 5, 451, 331, 431, 172, 1149, 193, 1141, 305, 1191, 870, 137, 11, 1668
        // NO SORTING
@@ -296,7 +300,7 @@ namespace cv{
       for( int i_scale = 0; i_scale < SCALE_SAMPLES; ++i_scale )
       {
         float sclFactor = pow( SCALE_FACTOR, i_scale );
-        patternSizes.push_back(BIGGEST_RADIUS * sclFactor);
+        patternSizes.push_back( (BIGGEST_RADIUS+geometryData[0][0][0].sigma) * sclFactor);
       }
       for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
       {
@@ -362,7 +366,7 @@ namespace cv{
           pair_result_statistics[j].push_back(0);
       }
 
-      float alpha = 0.075f;
+      float alpha = 0.03f;
       int disp = numBits/2;
       for( int i = -255; i <= 255; ++i )
       {
@@ -430,7 +434,7 @@ namespace cv{
 
       for( size_t i_kp = 0; i_kp < keypoints.size(); ++i_kp )
       {
-        kpScales[i_kp] = round(log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor);
+        kpScales[i_kp] = log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor;
         if( keypoints[i_kp].pt.x <= patternSizes[kpScales[i_kp]] || //check if the description at this specific position and scale fits inside the image
             keypoints[i_kp].pt.y <= patternSizes[kpScales[i_kp]] ||
             keypoints[i_kp].pt.x >= image.cols-patternSizes[kpScales[i_kp]] ||
@@ -495,6 +499,7 @@ namespace cv{
           }
           else
           {
+            // std::cout << "KERNEL SIZE " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma << std::endl;
             center = smoothedSum(
               grayImage,
               sum,
