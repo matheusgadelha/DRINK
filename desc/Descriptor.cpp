@@ -45,19 +45,36 @@ unsigned char smoothedSum(
     //   return static_cast<uchar>(ret_val / (4 * 1024 * 1024));
     // }
 
-    // std::cout << "SMOTHED KERNEL " << _kernelSize/2;
-    int HALF_KERNEL = _kernelSize/2;
+    int HALF_KERNEL = std::max(_kernelSize/2,1.0f);
 
     int img_y = (int)(pt.pt.y) + y;
     int img_x = (int)(pt.pt.x) + x;
-    std::cout << "DIMENSIONS: " << img.cols << " " << img.rows << std::endl;
-    std::cout << img_x << " " << img_y << " " << HALF_KERNEL << std::endl;
-    int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
-           - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
-           - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
-           + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
 
-    return (unsigned char)val;
+    // calculate borders
+    const int x_left = int(img_x-HALF_KERNEL+0.5);
+    const int y_top = int(img_y-HALF_KERNEL+0.5);
+    const int x_right = int(img_x+HALF_KERNEL+1.5);//integral image is 1px wider
+    const int y_bottom = int(img_y+HALF_KERNEL+1.5);//integral image is 1px higher
+    int ret_val;
+
+    if( img_x > sum.cols ) std::cout << img_x << " X OUT OF RANGE\n";
+    if( img_y > sum.rows ) std::cout << img_y << " Y OUT OF RANGE\n";
+
+    ret_val = sum.at<int>(y_bottom,x_right);//bottom right corner
+    ret_val -= sum.at<int>(y_bottom,x_left);
+    ret_val += sum.at<int>(y_top,x_left);
+    ret_val -= sum.at<int>(y_top,x_right);
+    ret_val = ret_val/( (x_right-x_left)* (y_bottom-y_top) );
+
+    //~ std::cout<<sum.step[1]<<std::endl;
+    return static_cast<uchar>(ret_val);
+
+    // std::cout << "SMOTHED KERNEL " << _kernelSize/2;
+
+    // int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
+    //        - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
+    //        - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
+    //        + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
 }
 
 inline
@@ -300,7 +317,7 @@ namespace cv{
       for( int i_scale = 0; i_scale < SCALE_SAMPLES; ++i_scale )
       {
         float sclFactor = pow( SCALE_FACTOR, i_scale );
-        patternSizes.push_back( (BIGGEST_RADIUS+geometryData[0][0][0].sigma) * sclFactor);
+        patternSizes.push_back( ceil((BIGGEST_RADIUS+geometryData[0][0][0].sigma) * sclFactor) + 1);
       }
       for( int i_point = 0; i_point < ringSize*numRings; ++i_point )
       {
@@ -435,12 +452,14 @@ namespace cv{
       for( size_t i_kp = 0; i_kp < keypoints.size(); ++i_kp )
       {
         kpScales[i_kp] = log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor;
+        std::cout << keypoints[i_kp].pt.x << " " << keypoints[i_kp].pt.y << " " << patternSizes[kpScales[i_kp]] << " " << geometryData[0][kpScales[i_kp]][0].x << std::endl;
         if( keypoints[i_kp].pt.x <= patternSizes[kpScales[i_kp]] || //check if the description at this specific position and scale fits inside the image
             keypoints[i_kp].pt.y <= patternSizes[kpScales[i_kp]] ||
             keypoints[i_kp].pt.x >= image.cols-patternSizes[kpScales[i_kp]] ||
-            keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]]
+            keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]] 
           )
         {
+          std::cout << "Removed " << patternSizes[kpScales[i_kp]] << std::endl;
           keypoints.erase(kpBegin+i_kp);
           kpScales.erase(scaleBegin+i_kp);
         }
