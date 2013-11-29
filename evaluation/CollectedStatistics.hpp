@@ -35,6 +35,7 @@ struct FrameMatchingStatistics
     float homographyError;
 
     double consumedTimeMs;
+    double descriptorTimeMs;
     cv::Scalar reprojectionError;
     bool   isValid;
 

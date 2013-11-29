@@ -133,7 +133,7 @@ float stdDeviation( std::vector< std::vector<unsigned char> >& data, int col )
 
 #define PAIRS Descriptor::pairs
 #define DATA Descriptor::data
-#define BEST_PAIR_NUM 128
+#define BEST_PAIR_NUM 64
 
 void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 {
@@ -240,7 +240,7 @@ int main( int argc, char* argv[])
 	Mat img;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,4,4,64,true);
 
 	std::vector< std::vector<unsigned char> > data;
 	std::vector<int> bestPairs;
@@ -273,8 +273,8 @@ int main( int argc, char* argv[])
 	// bestPairs.push_back( firstPair );
 
 	// float t = 0.2f;
-	// for( int i=0; i<DATA[0].size(); ++i)
-	// 	columnMeanStorage.push_back( columnMean(DATA,i) );
+	for( int i=0; i<DATA[0].size(); ++i)
+		columnMeanStorage.push_back( columnMean(DATA,i) );
 
 	cout << "Creating correlation matrix...";
 	for( unsigned i=0; i<correlation_matrix.size(); ++i )
@@ -283,21 +283,21 @@ int main( int argc, char* argv[])
 		{
 			correlation_matrix[i][j] = correlation( data, i, j );
 			correlation_matrix[j][i] = correlation_matrix[i][j];
-			cout << correlation_matrix[i][j] << " ";
+			// cout << correlation_matrix[i][j] << " ";
 		}
-		cout << endl;
+		// cout << endl;
 	}
 	cout << "Done\n";
 
-	for( unsigned i=0; i<correlation_matrix.size(); ++i )
-	{
-		for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
-		{
-			float in_val;
-			cin >> in_val;
-			correlation_matrix[j][i] = correlation_matrix[i][j] = in_val;
-		}
-	}
+	// for( unsigned i=0; i<correlation_matrix.size(); ++i )
+	// {
+	// 	for( unsigned j=i; j<correlation_matrix[i].size(); ++j )
+	// 	{
+	// 		float in_val;
+	// 		cin >> in_val;
+	// 		correlation_matrix[j][i] = correlation_matrix[i][j] = in_val;
+	// 	}
+	// }
 
 	cout << "Computing standard deviation for all pairs...\n";
 	std::vector<PairData> ordered_pairs;

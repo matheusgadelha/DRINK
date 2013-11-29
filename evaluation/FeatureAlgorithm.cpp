@@ -22,13 +22,14 @@ FeatureAlgorithm::FeatureAlgorithm(std::string n, cv::Ptr<cv::Feature2D> fe, cv:
 }
 
 
-bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
+bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& descTime) const
 {
     assert(!image.empty());
 
     if (featureEngine)
     {
         (*featureEngine)(image, cv::noArray(), kp, desc);
+        descTime = 0;
     }
     else
     {
@@ -36,8 +37,13 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     
         if (kp.empty())
             return false;
-    
+
+        int64 start = cv::getTickCount();
+
         extractor->compute(image, kp, desc);
+
+        int64 end = cv::getTickCount();
+        descTime = end - start;
     }
     
     

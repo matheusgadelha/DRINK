@@ -149,7 +149,7 @@ CollectedStatistics::OuterGroupLine CollectedStatistics::groupByTransformationTh
             Line l;
             l.argument = firstStat[i].argumentValue;
 
-            for (int algIndex = 0; algIndex < statitics.size(); algIndex++)
+            for (size_t algIndex = 0; algIndex < statitics.size(); algIndex++)
             {
                 const SingleRunStatistics& s = *statitics[algIndex];
 
@@ -220,7 +220,9 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
     str << quote("Performance")               << std::endl;
     str << quote("Algorithm")                 << tab
         << quote("Average time per Frame")    << tab
-        << quote("Average time per KeyPoint") << std::endl;
+        << quote("Average time per KeyPoint") << tab
+        << quote("Average descriptor time per Frame") << tab
+        << quote("Average descriptor time per KeyPoint") << std::endl;
 
     CollectedStatistics::OuterGroup report = groupByAlgorithmThenByTransformation();
 
@@ -228,6 +230,8 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
     {
         std::vector<double> timePerFrames;
         std::vector<double> timePerKeyPoint;
+        std::vector<double> descTimePerFrames;
+        std::vector<double> descTimePerKeyPoint;
 
         for (CollectedStatistics::InnerGroup::const_iterator tIter = alg->second.begin(); tIter != alg->second.end(); ++tIter)
         {
@@ -238,6 +242,8 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
                 {
                     timePerFrames.push_back(runStatistics[i].consumedTimeMs);
                     timePerKeyPoint.push_back(runStatistics[i].totalKeypoints > 0 ? (runStatistics[i].consumedTimeMs / runStatistics[i].totalKeypoints) : 0);
+                    descTimePerFrames.push_back(runStatistics[i].descriptorTimeMs);
+                    descTimePerKeyPoint.push_back(runStatistics[i].totalKeypoints > 0 ? (runStatistics[i].descriptorTimeMs / runStatistics[i].totalKeypoints) : 0);
                 }
             }
         }
@@ -245,9 +251,14 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
         double avgPerFrame    = std::accumulate(timePerFrames.begin(),   timePerFrames.end(), 0.0)     / timePerFrames.size();
         double avgPerKeyPoint = std::accumulate(timePerKeyPoint.begin(), timePerKeyPoint.end(), 0.0) / timePerKeyPoint.size();
 
+        double descAvgPerFrame    = std::accumulate(descTimePerFrames.begin(),   descTimePerFrames.end(), 0.0)     / descTimePerFrames.size();
+        double descAvgPerKeyPoint = std::accumulate(descTimePerKeyPoint.begin(), descTimePerKeyPoint.end(), 0.0) / descTimePerKeyPoint.size();
+
         str << quote(alg->first) << tab
             << avgPerFrame       << tab
-            << avgPerKeyPoint    << std::endl;
+            << avgPerKeyPoint    << tab
+            << descAvgPerFrame   << tab
+            << descAvgPerKeyPoint << std::endl;
     }
 
     return str << std::endl;

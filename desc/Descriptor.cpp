@@ -57,8 +57,10 @@ unsigned char smoothedSum(
     const int y_bottom = int(img_y+HALF_KERNEL+1.5);//integral image is 1px higher
     int ret_val;
 
-    if( img_x > sum.cols ) std::cout << img_x << " X OUT OF RANGE\n";
-    if( img_y > sum.rows ) std::cout << img_y << " Y OUT OF RANGE\n";
+    // std::cout << "SMOOTHED " << pt.pt.x << " " << pt.pt.y << " " << x << " " << y << std::endl;
+
+    // if( img_x > sum.cols ) std::cout << img_x << " X OUT OF RANGE\n";
+    // if( img_y > sum.rows ) std::cout << pt.pt.y << " " << y << " " << img_y << " Y OUT OF RANGE\n";
 
     ret_val = sum.at<int>(y_bottom,x_right);//bottom right corner
     ret_val -= sum.at<int>(y_bottom,x_left);
@@ -383,11 +385,12 @@ namespace cv{
           pair_result_statistics[j].push_back(0);
       }
 
-      float alpha = 0.03f;
+      float alpha = 0.015f;
       int disp = numBits/2;
       for( int i = -255; i <= 255; ++i )
       {
-        int idx = round((disp*alpha*i)/sqrt(1+pow(alpha*i,2))) + disp;
+        // int idx = round((disp*alpha*i)/sqrt(1+pow(alpha*i,2))) + disp;
+        int idx = (5*i/510.0f) + disp;
         bins.push_back( results[ idx ] );
       }
     }
@@ -449,17 +452,16 @@ namespace cv{
       float log_scale_factor = 1/log(SCALE_FACTOR);
       float inv_biggest_radius = 1/BIGGEST_RADIUS;
 
-      for( size_t i_kp = 0; i_kp < keypoints.size(); ++i_kp )
+      for( size_t i_kp = keypoints.size(); i_kp--; )
       {
         kpScales[i_kp] = log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor;
-        std::cout << keypoints[i_kp].pt.x << " " << keypoints[i_kp].pt.y << " " << patternSizes[kpScales[i_kp]] << " " << geometryData[0][kpScales[i_kp]][0].x << std::endl;
         if( keypoints[i_kp].pt.x <= patternSizes[kpScales[i_kp]] || //check if the description at this specific position and scale fits inside the image
             keypoints[i_kp].pt.y <= patternSizes[kpScales[i_kp]] ||
             keypoints[i_kp].pt.x >= image.cols-patternSizes[kpScales[i_kp]] ||
             keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]] 
           )
         {
-          std::cout << "Removed " << patternSizes[kpScales[i_kp]] << std::endl;
+          // std::cout << "Removed " << patternSizes[kpScales[i_kp]] << std::endl;
           keypoints.erase(kpBegin+i_kp);
           kpScales.erase(scaleBegin+i_kp);
         }
@@ -501,7 +503,7 @@ namespace cv{
         {
 
           if( bit_count == 8 )
-          {
+          {    
             inserted_chars++;
             bit_count = 0;
           }
@@ -509,6 +511,7 @@ namespace cv{
           unsigned char center;
           if(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma <= 1)
           {
+            // std::cout << "CENTER VALUEAT" << pt.pt.x << " " << pt.pt.y << " " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].x << " " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].y << std::endl;
             center = valueAt(
               pt,
               Point2i(geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].x,
@@ -518,7 +521,7 @@ namespace cv{
           }
           else
           {
-            // std::cout << "KERNEL SIZE " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].sigma << std::endl;
+            // std::cout << "CENTER " << pt.pt.x << " " << pt.pt.y << " " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].x << " " << geometryData[pairs[i].a][kpScales[i_kp]][rot_idx].y << std::endl;
             center = smoothedSum(
               grayImage,
               sum,
@@ -544,6 +547,7 @@ namespace cv{
           unsigned char cpoint;
           if(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].sigma <= 1)
           {
+            // std::cout << "CPOINT VALUEAT " << pt.pt.x << " " << pt.pt.y << " " << geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].x << " " << geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].y << std::endl;
             cpoint = valueAt(
               pt,
               Point2i(geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].x,
@@ -553,6 +557,8 @@ namespace cv{
           }
           else
           {
+            // std::cout << keypoints[i_kp].pt.y << " " << image.rows-patternSizes[kpScales[i_kp]] << std::endl;
+            // std::cout << "CPOINT " << pt.pt.x << " " << pt.pt.y << " " << geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].x << " " << geometryData[pairs[i].b][kpScales[i_kp]][rot_idx].y << std::endl;
             cpoint = smoothedSum(
               grayImage,
               sum,

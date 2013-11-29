@@ -58,8 +58,10 @@ bool performEstimation
         cv::cvtColor(sourceImage, gray, CV_BGRA2GRAY);
     else if(sourceImage.channels() == 1)
         gray = sourceImage;
+
+    int64 dirtyTime;
     
-    if (!alg.extractFeatures(gray, sourceKp, sourceDesc))
+    if (!alg.extractFeatures(gray, sourceKp, sourceDesc, dirtyTime))
         return false;
     
     std::vector<float> x = transformation.getX();
@@ -74,8 +76,7 @@ bool performEstimation
     
     // To convert ticks to milliseconds
     const double toMsMul = 1000. / cv::getTickFrequency();
-    
-#pragma omp parallel for private(transformedImage, resKpReal, resDesc, matches)
+
     for (int i = 0; i < count; i++)
     {
         float       arg = x[i];
@@ -86,10 +87,11 @@ bool performEstimation
         
         //cv::imshow("transformedImage",transformedImage);
         //cv::waitKey(-1);
-        
+
+        int64 descTime;        
         int64 start = cv::getTickCount();
         
-        alg.extractFeatures(transformedImage, resKpReal, resDesc);
+        alg.extractFeatures(transformedImage, resKpReal, resDesc, descTime);
         
         // Initialize required fields
         s.isValid        = resKpReal.size() > 0;
@@ -123,6 +125,7 @@ bool performEstimation
         s.isValid        = homographyFound;
         s.totalKeypoints = resKpReal.size();
         s.consumedTimeMs = (end - start) * toMsMul;
+        s.descriptorTimeMs = descTime * toMsMul;
         
         // Compute overall percent of matched keypoints
         s.percentOfMatches      = (float) matches.size() / (float)(std::min(sourceKp.size(), resKpReal.size()));

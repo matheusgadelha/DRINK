@@ -1,7 +1,7 @@
 "Performance"
-"Algorithm"	"Average time per Frame"	"Average time per KeyPoint"
-"BRIEF"	18.0805	0.0363271
-"DRINK"	17.4777	0.0383127
-"FREAK"	14.3909	0.0593187
-"ORB"	23.6063	0.0473522
+"Algorithm"	"Average time per Frame"	"Average time per KeyPoint"	"Average descriptor time per Frame"	"Average descriptor time per KeyPoint"
+"BRIEF"	16.9696	0.0340208	2.02213	0.00405504
+"DRINK"	14.2057	0.0307377	2.02119	0.00438226
+"FREAK"	14.4526	0.0522532	1.75285	0.00620403
+"ORB"	22.9051	0.045923	7.93458	0.0159101
 

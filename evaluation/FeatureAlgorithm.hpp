@@ -22,7 +22,7 @@ public:
     bool knMatchSupported;
     
     //! Extracts feature points and compute descriptors from given image.
-	bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const;
+	bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& descTime) const;
     
     //! Finds correspondences using regular match.
     void matchFeatures(const Descriptors& train, const Descriptors& query, Matches& matches) const;
