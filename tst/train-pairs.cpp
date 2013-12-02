@@ -240,7 +240,7 @@ int main( int argc, char* argv[])
 	Mat img;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,4,4,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,64,true);
 
 	std::vector< std::vector<unsigned char> > data;
 	std::vector<int> bestPairs;
@@ -307,7 +307,7 @@ int main( int argc, char* argv[])
 		numTests += PAIRS[0].resultCount[i];
 	}
 
-	for( size_t i=0; i<380; ++i )
+	for( size_t i=0; i<PAIRS.size(); ++i )
 	{
 		cout << "i: " << i << endl;
 		PairData p( i, stdDeviation(data,i) );
