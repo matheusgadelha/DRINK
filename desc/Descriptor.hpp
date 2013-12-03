@@ -70,10 +70,10 @@ namespace cv{
 		    static std::vector< int > result_statistics;
 		    static const int scales = 8;
 
-		    static const int ROTATION_SAMPLES = 80;
+		    static const int ROTATION_SAMPLES = 30;
 		    static const float BIGGEST_RADIUS = 200.0f;
-		    static const float SCALE_SAMPLES = 100;
-		    static const float SCALE_FACTOR = 0.97f;
+		    static const float SCALE_SAMPLES = 50;
+		    static const float SCALE_FACTOR = 0.8f;
 		    // static const float GEOMETRY_SCALE_FACTOR = 0.8f;
 		    static const float GEOMETRY_SCALE_FACTOR = 0.6f;
 

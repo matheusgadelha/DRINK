@@ -2,7 +2,7 @@ CC = g++
 
 CFLAGS = -Wall -pg -ggdb
 
-OPENCV_LS = -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video
+OPENCV_LS = -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video -lopencv_nonfree
 
 OPENCV_INCLUDES = -I/usr/local/include/opencv2 -I/usr/local/include
 
@@ -19,6 +19,8 @@ INCLUDES = -I../desc
 all: tst-desc.cpp
 	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv tst-desc ../bin/
+	$(CC) roc_curve.cpp -o roc_curve $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv roc_curve ../bin/
 	$(CC) train-pairs.cpp -o train-pairs $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv train-pairs ../bin/
 	

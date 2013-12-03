@@ -1,6 +1,5 @@
 set terminal png
-set output "graph.png"
-plot "./BRIEF_DRINK_Comp.data" using 1:2 title 'BRIEF' with lines, \
-	"./BRIEF_DRINK_Comp.data" using 1:3 title 'DRINK' with lines, \
-	"./BRIEF_DRINK_Comp.data" using 1:4 title 'FREAK' with lines, \
-	"./BRIEF_DRINK_Comp.data" using 1:5 title 'ORB' with lines
+set output "recall.png"
+plot "./DRINK_recallPrecision.txt" using 1:2 title 'DRINK' with lines, \
+	 "./ORB_recallPrecision.txt" using 1:2 title 'ORB' with lines, \
+	 "./FREAK_recallPrecision.txt" using 1:2 title 'FREAK' with lines

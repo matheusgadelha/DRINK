@@ -64,6 +64,25 @@ float uniformTVD( const PairData& a ) {
 	return a_udist/2.0f;
 }
 
+float entropy( const PairData& a ) {
+
+	float result = 0.0f, total = 0.0f;
+
+	for( size_t i=0; i < a.dist.size(); ++i )
+	{
+		total += a.dist[i];
+	}	
+
+	for( size_t i=0; i < a.dist.size(); ++i )
+	{
+		float prob = a.dist[i] / total;
+		result += prob * log( prob );
+	}
+
+	return -result;
+}
+
+
 float uniformKL( const PairData& a ) {
 
 	float a_udist = 0.0f;
@@ -95,7 +114,7 @@ float mean( const PairData& a ) {
 struct sortPairs
 {
 	bool operator()( const PairData& a, const PairData& b ) const {
-        return a.stdDeviation < b.stdDeviation;
+        return entropy(a) < entropy(b);
     }
 };
 
@@ -240,7 +259,7 @@ int main( int argc, char* argv[])
 	Mat img;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,8,5,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
 
 	std::vector< std::vector<unsigned char> > data;
 	std::vector<int> bestPairs;
@@ -310,7 +329,7 @@ int main( int argc, char* argv[])
 	for( size_t i=0; i<PAIRS.size(); ++i )
 	{
 		cout << "i: " << i << endl;
-		PairData p( i, stdDeviation(data,i) );
+		PairData p( i, 0.0f );
 		// PairData p( i, 0.0f );
 		for( size_t j=0; j<PAIRS[i].resultCount.size(); ++j )
 		{
