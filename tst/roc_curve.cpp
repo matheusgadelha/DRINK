@@ -37,6 +37,65 @@
 using namespace cv;
 using namespace std;
 
+void computeKeyPointsByHomography( vector<KeyPoint>& kp1, vector<KeyPoint>& kp2, Mat& h )
+{
+	vector<Point2f> p1, p2;
+	KeyPoint::convert( kp1, p1 );
+
+	perspectiveTransform( p1, p2, h );
+
+	for( size_t i = 0; i < kp1.size(); ++i )
+	{
+		kp2.push_back(
+			KeyPoint(
+				p2[i],
+				kp1[i].size,
+				kp1[i].angle,
+				kp1[i].response,
+				kp1[i].octave,
+				kp1[i].class_id
+			)
+		);
+	}
+}
+
+void createCorrectMatches( vector<KeyPoint>& kp1, vector<KeyPoint>& kp2, vector<DMatch>& matches, Mat& h, Mat& img )
+{
+	computeKeyPointsByHomography( kp1, kp2, h );
+	assert( kp1.size() == kp2.size() );
+	assert( kp1.size() != 0 && kp2.size() != 0 );
+
+	vector<KeyPoint>::iterator kp1Begin = kp1.begin();
+	vector<KeyPoint>::iterator kp2Begin = kp2.begin();
+
+	for( size_t i = kp1.size(); i--; )
+	{
+		if( kp1[i].pt.x <= 0 || 
+            kp1[i].pt.y <= 0 ||
+            kp1[i].pt.x >= img.cols-0 ||
+            kp1[i].pt.y >= img.rows-0 
+          )
+        {
+          	kp1.erase( kp1Begin+i );
+          	kp2.erase( kp2Begin+i );
+        }
+        else if( kp2[i].pt.x <= 0 || 
+            kp2[i].pt.y <= 0 ||
+            kp2[i].pt.x >= img.cols-0 ||
+            kp2[i].pt.y >= img.rows-0 
+          )
+        {
+          	kp1.erase( kp1Begin+i );
+          	kp2.erase( kp2Begin+i );
+        }
+	}
+
+	for( size_t i = 0; i < kp1.size(); ++i )
+	{
+		matches.push_back( DMatch( i, i, 0.0f ) );
+	}
+}
+
 int main( int argc, char* argv[] )
 {
 	const char * img1_path = argv[1];
@@ -49,6 +108,7 @@ int main( int argc, char* argv[] )
 
 	vector<Point2f> recallPrecision;
 	vector<KeyPoint> kp1, kp2;
+	vector<DMatch> correct_matches;
 
 	fstream homography_fstream;
 	homography_fstream.open( homography_path, ios::out | ios::in );
@@ -67,18 +127,40 @@ int main( int argc, char* argv[] )
 	//--------------DRINK
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
+	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,false);
 	// Ptr<DescriptorExtractor> de = new ORB();
 	Ptr<DescriptorMatcher> dm = new BFMatcher( cv::NORM_HAMMING, false );
 
 	Ptr<GenericDescriptorMatcher> gdm = new VectorDescriptorMatcher( de, dm );
 
 	fd->detect( img1, kp1 );
-	fd->detect( img2, kp2 );
+	// fd->detect( img2, kp2 );
+
+	createCorrectMatches( kp1, kp2, correct_matches, homography, img1 );
 
 	evaluateGenericDescriptorMatcher(img1, img2, homography, kp1, kp2, 0, 0, recallPrecision, gdm );
 
 	results.open("DRINK_recallPrecision.txt");
+	for( size_t i = recallPrecision.size(); i--; )
+	{
+		results << recallPrecision[i].x << " " << recallPrecision[i].y << endl;
+	}
+	cout << "END\n";
+	results.close();
+	results.clear();
+
+	//--------------FREAK
+
+	de = new FREAK(true, true);
+	dm = new BFMatcher( cv::NORM_HAMMING, false );
+
+	gdm = new VectorDescriptorMatcher( de, dm );
+
+	fd->detect( img1, kp1 );
+
+	evaluateGenericDescriptorMatcher(img1, img2, homography, kp1, kp2, 0, 0, recallPrecision, gdm );
+
+	results.open("FREAK_recallPrecision.txt");
 	for( size_t i = recallPrecision.size(); i--; )
 	{
 		results << recallPrecision[i].x << " " << recallPrecision[i].y << endl;
@@ -105,25 +187,6 @@ int main( int argc, char* argv[] )
 	}
 	results.close();
 	results.clear();
-
-	//--------------FREAK
-
-	de = new FREAK();
-	dm = new BFMatcher( cv::NORM_HAMMING, false );
-
-	gdm = new VectorDescriptorMatcher( de, dm );
-
-	fd->detect( img1, kp1 );
-	fd->detect( img2, kp2 );
-
-	evaluateGenericDescriptorMatcher(img1, img2, homography, kp1, kp2, 0, 0, recallPrecision, gdm );
-
-	results.open("FREAK_recallPrecision.txt");
-	for( size_t i = recallPrecision.size(); i--; )
-	{
-		results << recallPrecision[i].x << " " << recallPrecision[i].y << endl;
-	}
-	results.close();
 
 	return 0;
 }

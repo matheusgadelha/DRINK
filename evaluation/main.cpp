@@ -21,7 +21,7 @@ string itos(int i) // convert int to string
     return s.str();
 }
 
-const bool USE_VERBOSE_TRANSFORMATIONS = false;
+const bool USE_VERBOSE_TRANSFORMATIONS = true;
 
 int main(int argc, const char* argv[])
 {
@@ -38,10 +38,10 @@ int main(int argc, const char* argv[])
     //     new cv::BRISK(60,4),
     //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-    algorithms.push_back(FeatureAlgorithm("BRIEF",
-        new cv::ORB(),
-        new cv::BriefDescriptorExtractor(),
-        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+    algorithms.push_back(FeatureAlgorithm("SURF",
+        new cv::SURF(2000,4),
+        new cv::SURF(),
+        new cv::BFMatcher(cv::NORM_L2, useCrossCheck)));
 
     // for( int i=4; i<15; ++i )
     //     for( int j=7; j<9; ++j)
