@@ -32,7 +32,7 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "Descriptor.hpp"
+#include "DRINK.hpp"
 
 using namespace cv;
 using namespace std;
@@ -150,11 +150,11 @@ float stdDeviation( std::vector< std::vector<unsigned char> >& data, int col )
 	return sqrt(sqrd_sum/(float)data.size());
 }
 
-#define PAIRS Descriptor::pairs
-#define DATA Descriptor::data
+#define PAIRS DRINK::pairs
+#define DATA DRINK::data
 #define BEST_PAIR_NUM 64
 
-void showDescriptorGeometry( Descriptor& d, int scale, int rot)
+void showDescriptorGeometry( DRINK& d, int scale, int rot)
 {
 	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
 
@@ -175,18 +175,6 @@ void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 			Scalar( 0, 0, 255)
 		);
 	}
-	// for( int i=0; i < d.numPairs; ++i )
-	// {
-	// 	float colorAtt = 255.0f;
-	// 	line(
-	// 		img,
-	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
-	// 				 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
-	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
-	// 				 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
-	// 		Scalar( 0, colorAtt, colorAtt )
-	// 	);
-	// }
 
 	imshow("Geometry Test", img);
 	waitKey();
@@ -259,7 +247,7 @@ int main( int argc, char* argv[])
 	Mat img;
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,6,7,64,true);
+	Ptr<DescriptorExtractor> de = new DRINK(4,6,7,64,true);
 
 	std::vector< std::vector<unsigned char> > data;
 	std::vector<int> bestPairs;
@@ -282,7 +270,7 @@ int main( int argc, char* argv[])
 
 	std::vector< std::vector<float> > correlation_matrix ( PAIRS.size(), std::vector<float>(PAIRS.size(),0.0f) );
 
-	Descriptor d = *(static_cast<Ptr<Descriptor> >(de));
+	DRINK d = *(static_cast<Ptr<DRINK> >(de));
 	data = DATA;
 
 	cout << DATA[0].size() << endl;
@@ -292,7 +280,7 @@ int main( int argc, char* argv[])
 	// bestPairs.push_back( firstPair );
 
 	// float t = 0.2f;
-	for( int i=0; i<DATA[0].size(); ++i)
+	for( unsigned i=0; i<DATA[0].size(); ++i)
 		columnMeanStorage.push_back( columnMean(DATA,i) );
 
 	cout << "Creating correlation matrix...";

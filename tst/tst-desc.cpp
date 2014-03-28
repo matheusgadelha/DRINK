@@ -1,5 +1,5 @@
 /*!
- * \brief Test program for descriptor research.
+ * \brief Test program for DRINK research.
  * \date March 13th, 2013.
  * \version 1.0
  * \copyright GNU Public License
@@ -29,7 +29,7 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "Descriptor.hpp"
+#include "DRINK.hpp"
 
 using namespace cv;
 using namespace std;
@@ -52,7 +52,7 @@ unsigned char testSmoothedSum(
     return (unsigned char) val;
 }
 
-void showDescriptorGeometry( Descriptor& d, int scale, int rot)
+void showDRINKGeometry( DRINK& d, int scale, int rot)
 {
 	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
 
@@ -90,7 +90,7 @@ void showDescriptorGeometry( Descriptor& d, int scale, int rot)
 	waitKey();
 }
 
-void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const int rot, const KeyPoint& pt )
+void drawDRINKGeometryAtKp( Mat& img, DRINK& d, const int scale, const int rot, const KeyPoint& pt )
 {
 	for( int i = 0; i<d.ringSize * d.numRings; ++i )
 	{
@@ -125,7 +125,7 @@ void drawDescriptorGeometryAtKp( Mat& img, Descriptor& d, const int scale, const
 	}
 }
 
-// void printDescriptorProcedure( Mat& img, Descriptor& d, const int scale, const int rot, const KeyPoint& pt )
+// void printDRINKProcedure( Mat& img, DRINK& d, const int scale, const int rot, const KeyPoint& pt )
 // {
 // 	std::cout 
 // 		<< "Center: "
@@ -170,7 +170,7 @@ int main( int argc, char* argv[])
 	integral( img2, img_sum2, CV_32S );
 
 	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new Descriptor(4,5,4,64,true);
+	Ptr<DescriptorExtractor> de = new DRINK(4,6,7,64,true);
 	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
 
 	vector<KeyPoint> kps1;
@@ -212,15 +212,15 @@ int main( int argc, char* argv[])
   }
 
   //std::cout << "Number of occurences per result\n";
-  //for( int i = 0; i < Descriptor::result_statistics.size(); ++i )
+  //for( int i = 0; i < DRINK::result_statistics.size(); ++i )
   //{
-  //  cout << static_cast< Ptr<Descriptor> >(de)->results[i] << ": " << Descriptor::result_statistics[i] << endl;
+  //  cout << static_cast< Ptr<DRINK> >(de)->results[i] << ": " << DRINK::result_statistics[i] << endl;
   //}
 
     // std::cout << "Binary Values\n";
-    // for( int i = 0; i < static_cast< Ptr<Descriptor> >(de)->bins.size(); ++i)
+    // for( int i = 0; i < static_cast< Ptr<DRINK> >(de)->bins.size(); ++i)
     // {
-    // 	cout << i << ": " << static_cast< Ptr<Descriptor> >(de)->bins[i] << endl;
+    // 	cout << i << ": " << static_cast< Ptr<DRINK> >(de)->bins[i] << endl;
     // }
 
   //   for( int i = kps1.size(); --i; )
@@ -232,10 +232,10 @@ int main( int argc, char* argv[])
 		// 		Scalar( 0, 0, 255 )
 		// 	); 
 
-		// drawDescriptorGeometryAtKp(
+		// drawDRINKGeometryAtKp(
 		// 	img_matches,
-		// 	*(static_cast< Ptr<Descriptor> >( de )),
-		// 	round(log(kps1[i].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		// 	*(static_cast< Ptr<DRINK> >( de )),
+		// 	round(log(kps1[i].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
 		// 	0,
 		// 	kps1[i]
 		// );
@@ -254,64 +254,64 @@ int main( int argc, char* argv[])
 		// 		Scalar( 0, 0, 255 )
 		// 	); 
 
-		// drawDescriptorGeometryAtKp(
+		// drawDRINKGeometryAtKp(
 		// 	img_matches,
-		// 	*(static_cast< Ptr<Descriptor> >( de )),
-		// 	round(log(kp.size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+		// 	*(static_cast< Ptr<DRINK> >( de )),
+		// 	round(log(kp.size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
 		// 	0,
 		// 	kp
 		// );
 		// std::cout << kps1[i].size << std::endl;
   //   }
 
-    const int descriptor_type_size = ((float)static_cast< Ptr<Descriptor> >(de)->numBits/8)*
-    									static_cast< Ptr<Descriptor> >(de)->numPairs;
+    const int DRINK_type_size = ((float)static_cast< Ptr<DRINK> >(de)->numBits/8)*
+    									static_cast< Ptr<DRINK> >(de)->numPairs;
 
  //    uchar* desc = descs1.ptr(4);
- //    for( int i=0; i < descriptor_type_size; ++i )
+ //    for( int i=0; i < DRINK_type_size; ++i )
 	// {
 	//    	std::cout << std::bitset<8>(desc[i]) << " ";
 	//   	// std::cout << (int)desc[i] << " ";
 	// }
 	// std::cout << std::endl;
 
-	// printDescriptorProcedure(
+	// printDRINKProcedure(
 	// 	img1,
-	// 	*(static_cast< Ptr<Descriptor> >( de )),
-	// 	round(log(kps1[4].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+	// 	*(static_cast< Ptr<DRINK> >( de )),
+	// 	round(log(kps1[4].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
 	// 	0,
 	// 	kps1[4]
 	// );
 	// std::cout << std::endl;
 
 	// desc = descs2.ptr(11);
- //    for( int i=0; i < descriptor_type_size; ++i )
+ //    for( int i=0; i < DRINK_type_size; ++i )
 	// {
 	//    	std::cout << std::bitset<8>(desc[i]) << " ";
 	// }
 	// std::cout << std::endl;
 
-	// printDescriptorProcedure(
+	// printDRINKProcedure(
 	// 	img2,
-	// 	*(static_cast< Ptr<Descriptor> >( de )),
-	// 	round(log(kps2[11].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+	// 	*(static_cast< Ptr<DRINK> >( de )),
+	// 	round(log(kps2[11].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
 	// 	0,
 	// 	kps2[11]
 	// );
 	// std::cout << std::endl;
 
 	// desc = descs2.ptr(39);
- //    for( int i=0; i < descriptor_type_size; ++i )
+ //    for( int i=0; i < DRINK_type_size; ++i )
 	// {
 	//    	std::cout << std::bitset<8>(desc[i]) << " ";
 	//   	// std::cout << (int)desc[i] << " ";
 	// }
 	// std::cout << std::endl;
 
-	// printDescriptorProcedure(
+	// printDRINKProcedure(
 	// 	img2,
-	// 	*(static_cast< Ptr<Descriptor> >( de )),
-	// 	round(log(kps2[39].size/Descriptor::BIGGEST_RADIUS)/log(Descriptor::SCALE_FACTOR)),
+	// 	*(static_cast< Ptr<DRINK> >( de )),
+	// 	round(log(kps2[39].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
 	// 	0,
 	// 	kps2[39]
 	// );
@@ -323,7 +323,7 @@ int main( int argc, char* argv[])
 
 	for( int i = 0; i < 30; ++i )
 		for( int j=0; j<100; ++j)
-			showDescriptorGeometry(*(static_cast< Ptr<Descriptor> >(de)),j,i);
+			showDRINKGeometry(*(static_cast< Ptr<DRINK> >(de)),j,i);
 
 	return 0;
 }

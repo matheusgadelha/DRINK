@@ -12,7 +12,7 @@ OPENCV = $(OPENCV_LS) $(OPENCV_INCLUDES)
 
 LIB_DIR = -L../lib/
 
-LS = -ldescriptor
+LS = -lDRINK
 
 INCLUDES = -I../desc
 

@@ -1,0 +1,103 @@
+#ifndef DRINK_HPP_
+#define DRINK_HPP_
+
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <bitset>
+#include <cstdlib>
+
+#include "opencv2/opencv.hpp"
+
+#define RBITS 16
+#define PI 3.1415f
+
+namespace cv {
+
+    class CV_EXPORTS DRINK : public cv::DescriptorExtractor {
+    public:
+
+        struct PatternPoint {
+            PatternPoint();
+            PatternPoint(int _x, int _y);
+
+            int x;
+            int y;
+            float sigma;
+        };
+
+        struct TestPair {
+            TestPair();
+            TestPair(int _a, int _b);
+            int a;
+            int b;
+            int result;
+            std::vector<int> resultCount;
+        };
+
+
+    public:
+
+        DRINK(int _numBits = 4, int _ringSize = 6, int _numRings = 7, int _pairs = 64, bool _allPairs = false);
+
+        virtual int descriptorSize() const;
+        virtual int descriptorType() const;
+
+        std::vector< std::vector< std::vector<PatternPoint> > > geometryData;
+        std::vector< std::bitset<RBITS> > results;
+        std::vector< std::bitset<RBITS> > bins;
+        static std::vector<TestPair> pairs;
+        static std::vector<TestPair> allPairsVec;
+        static std::vector< std::vector<unsigned char> > data;
+        std::vector<int> bestPairs;
+
+        int numBits;
+        int ringSize;
+        int numRings;
+        int numPairs;
+        int numPoints;
+        bool allPairs;
+
+        int radiusStep;
+        int firstRadius;
+
+        static std::vector< std::vector<int> > pair_result_statistics;
+        static std::vector<int> patternSizes;
+        static std::vector<float> pair_std_dev;
+        static std::vector< int > result_statistics;
+        static const int scales = 8;
+
+        static const int ROTATION_SAMPLES = 30;
+        static const float BIGGEST_RADIUS = 200.0f;
+        static const float SCALE_SAMPLES = 25;
+        static const float SCALE_FACTOR = 0.7f;
+        // static const float GEOMETRY_SCALE_FACTOR = 0.8f;
+        static const float GEOMETRY_SCALE_FACTOR = 0.6f;
+
+        float smallestRadius;
+
+    protected:
+
+        virtual void computeImpl(
+                const Mat& image,
+                vector<KeyPoint>& keypoints,
+                Mat& DRINKs) const;
+
+        typedef void(*PixelTestFn)(const Mat&, const vector<KeyPoint>&, Mat&);
+
+        void generateGeometry();
+        void generateResults();
+        void generateRandomPairs();
+        void selectPairs(float _delta_min, float _delta_max);
+        float l2Distance(PatternPoint a, PatternPoint b);
+        void generateAllPairs();
+        void increaseStatistics(const std::bitset<RBITS> r) const;
+        void increaseStatisticsForPair(const std::bitset<RBITS> r, int p, int kp) const;
+
+        PixelTestFn test_fn_;
+
+    };
+
+}
+
+#endif

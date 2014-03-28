@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="90">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="0">
+      <df name="desc">
+        <in>DRINK.cpp</in>
+        <in>Descriptor.cpp</in>
+      </df>
+      <df name="evaluation">
+        <in>main.cpp</in>
+      </df>
+      <df name="tst">
+        <in>roc_curve.cpp</in>
+        <in>train-pairs.cpp</in>
+        <in>tst-desc.cpp</in>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+      </makefileType>
+      <item path="desc/DRINK.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>/usr/local/include/opencv2</pElem>
+            <pElem>/usr/local/include</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="desc/Descriptor.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>/usr/local/include/opencv2/core</pElem>
+            <pElem>/usr/local/include/opencv2/features2d</pElem>
+            <pElem>/usr/local/include/opencv2/flann</pElem>
+            <pElem>/usr/local/include/opencv2/objdetect</pElem>
+            <pElem>/usr/local/include/opencv2/contrib</pElem>
+            <pElem>/usr/local/include/opencv2/imgproc</pElem>
+            <pElem>desc</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="evaluation/main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <folder path="0/evaluation">
+        <ccTool>
+          <incDir>
+            <pElem>/usr/local/include/opencv2</pElem>
+            <pElem>/usr/local/include</pElem>
+            <pElem>desc</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="0/tst">
+        <ccTool>
+          <incDir>
+            <pElem>/usr/local/include/opencv2</pElem>
+            <pElem>/usr/local/include</pElem>
+            <pElem>desc</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <item path="tst/roc_curve.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="tst/train-pairs.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="tst/tst-desc.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

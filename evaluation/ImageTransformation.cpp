@@ -1,7 +1,5 @@
 #include "ImageTransformation.hpp"
 
-#pragma mark - ImageTransformation default implementation
-
 bool ImageTransformation::canTransformKeypoints() const
 {
     return false;
@@ -67,7 +65,7 @@ bool ImageTransformation::findHomography( const Keypoints& source, const Keypoin
     
     // Now use only good points to find refined homography:
     std::vector<cv::Point2f> refinedSrc, refinedDst;
-    for (int i = 0; i < inliers.size(); i++)
+    for (size_t i = 0; i < inliers.size(); i++)
     {
         refinedSrc.push_back(source[inliers[i].trainIdx].pt);
         refinedDst.push_back(result[inliers[i].queryIdx].pt);
@@ -96,8 +94,6 @@ bool ImageTransformation::findHomography( const Keypoints& source, const Keypoin
     homography = homography2;
     return inliers.size() >= 4;
 }
-
-#pragma mark - ImageRotationTransformation implementation
 
 ImageRotationTransformation::ImageRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace)
 : ImageTransformation("Rotation")
@@ -133,9 +129,6 @@ cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& sourc
     return h;
 }
 
-
-#pragma mark - ImageScalingTransformation implementation
-
 ImageScalingTransformation::ImageScalingTransformation(float minScale, float maxScale, float step)
 : ImageTransformation("Scaling")
 , m_minScale(minScale)
@@ -165,8 +158,6 @@ cv::Mat ImageScalingTransformation::getHomography(float t, const cv::Mat& source
     return h;
 }
 
-#pragma mark - GaussianBlurTransform implementation
-
 GaussianBlurTransform::GaussianBlurTransform(int maxKernelSize)
 : ImageTransformation("Gaussian blur")
 , m_maxKernelSize(maxKernelSize)
@@ -185,8 +176,6 @@ void GaussianBlurTransform::transform(float t, const cv::Mat& source, cv::Mat& r
     int kernelSize = static_cast<int>(t) * 2 + 1;
     cv::GaussianBlur(source, result, cv::Size(kernelSize,kernelSize), 0);
 }
-
-#pragma mark - BrightnessImageTransform implementation
 
 BrightnessImageTransform::BrightnessImageTransform(int min, int max, int step)
 : ImageTransformation("Brightness change")
@@ -207,8 +196,6 @@ void BrightnessImageTransform::transform(float t, const cv::Mat& source, cv::Mat
 {
     result = source + cv::Scalar(t,t,t,t);
 }
-
-#pragma mark - CombinedTransform implementation
 
 CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr<ImageTransformation> second, ParamCombinationType type)
 : ImageTransformation(first->name + "+" + second->name)
@@ -342,8 +329,6 @@ cv::Mat CombinedTransform::getHomography(float t, const cv::Mat& source) const
     return m_second->getHomography(t2, temp) * m_first->getHomography(t1, source);
 }
 
-#pragma mark PerspectiveTransform implementation
-
 PerspectiveTransform::PerspectiveTransform(int count)
 : ImageTransformation("Perspective")
 {
@@ -388,11 +373,127 @@ void PerspectiveTransform::transform(float t, const cv::Mat& source, cv::Mat& re
 
 cv::Mat PerspectiveTransform::getHomography(float t, const cv::Mat& source) const
 {
-    cv::Mat h = m_homographies[(int)t].clone();
+    cv::Mat h         = m_homographies[(int)t].clone();
     
     h.at<double>(0,2) *= source.cols;
     h.at<double>(1,2) *= source.rows;
 
     return h;
+}
+
+YRotationTransform::YRotationTransform( float _min, float _max, float _step )
+: ImageTransformation("YRotation")
+{
+    m_min  = _min;
+    m_max  = _max;
+    m_step = _step;
+
+    for( float i=m_min; i<=m_max; i+=m_step )
+    {
+        m_args.push_back(i);
+    }
+}
+
+std::vector<float> YRotationTransform::getX() const
+{
+    return m_args;
+}
+
+cv::Mat YRotationTransform::getHomography(float t, const cv::Mat& source) const
+{
+    float rotx = 0, roty = t * 3.1416/180, rotz = 0; // set these first
+    int f = 2; // this is also configurable, f=2 should be about 50mm focal length
+
+    int h = source.rows;
+    int w = source.cols;
+
+    float cx = cosf(rotx), sx = sinf(rotx);
+    float cy = cosf(roty), sy = sinf(roty);
+    float cz = cosf(rotz), sz = sinf(rotz);
+
+    float roto[3][2] = { // last column not needed, our vector has z=0
+        { cz * cy, cz * sy * sx - sz * cx },
+        { sz * cy, sz * sy * sx + cz * cx },
+        { -sy, cy * sx }
+    };
+
+    float pt[4][2] = {{ -w / 2, -h / 2 }, { w / 2, -h / 2 }, { w / 2, h / 2 }, { -w / 2, h / 2 }};
+    float ptt[4][2];
+    for (int i = 0; i < 4; i++) {
+        float pz = pt[i][0] * roto[2][0] + pt[i][1] * roto[2][1];
+        ptt[i][0] = w / 2 + (pt[i][0] * roto[0][0] + pt[i][1] * roto[0][1]) * f * h / (f * h + pz);
+        ptt[i][1] = h / 2 + (pt[i][0] * roto[1][0] + pt[i][1] * roto[1][1]) * f * h / (f * h + pz);
+    }
+
+    cv::Mat in_pt = (cv::Mat_<float>(4, 2) << 0, 0, w, 0, w, h, 0, h);
+    cv::Mat out_pt = (cv::Mat_<float>(4, 2) << ptt[0][0], ptt[0][1],
+        ptt[1][0], ptt[1][1], ptt[2][0], ptt[2][1], ptt[3][0], ptt[3][1]);
+
+    cv::Mat transform = cv::getPerspectiveTransform(in_pt, out_pt);
+
+    return transform;
+}
+
+void YRotationTransform::transform(float t, const cv::Mat& source, cv::Mat& result) const
+{
+    cv::warpPerspective( source, result, getHomography(t, source), source.size(), cv::INTER_CUBIC );
+}
+
+XRotationTransform::XRotationTransform( float _min, float _max, float _step )
+: ImageTransformation("XRotation")
+{
+    m_min  = _min;
+    m_max  = _max;
+    m_step = _step;
+
+    for( float i=m_min; i<=m_max; i+=m_step )
+    {
+        m_args.push_back(i);
+    }
+}
+
+std::vector<float> XRotationTransform::getX() const
+{
+    return m_args;
+}
+
+cv::Mat XRotationTransform::getHomography(float t, const cv::Mat& source) const
+{
+    float rotx = t * 3.1416/180, roty = 0, rotz = 0; // set these first
+    int f = 2; // this is also configurable, f=2 should be about 50mm focal length
+
+    int h = source.rows;
+    int w = source.cols;
+
+    float cx = cosf(rotx), sx = sinf(rotx);
+    float cy = cosf(roty), sy = sinf(roty);
+    float cz = cosf(rotz), sz = sinf(rotz);
+
+    float roto[3][2] = { // last column not needed, our vector has z=0
+        { cz * cy, cz * sy * sx - sz * cx },
+        { sz * cy, sz * sy * sx + cz * cx },
+        { -sy, cy * sx }
+    };
+
+    float pt[4][2] = {{ -w / 2, -h / 2 }, { w / 2, -h / 2 }, { w / 2, h / 2 }, { -w / 2, h / 2 }};
+    float ptt[4][2];
+    for (int i = 0; i < 4; i++) {
+        float pz = pt[i][0] * roto[2][0] + pt[i][1] * roto[2][1];
+        ptt[i][0] = w / 2 + (pt[i][0] * roto[0][0] + pt[i][1] * roto[0][1]) * f * h / (f * h + pz);
+        ptt[i][1] = h / 2 + (pt[i][0] * roto[1][0] + pt[i][1] * roto[1][1]) * f * h / (f * h + pz);
+    }
+
+    cv::Mat in_pt = (cv::Mat_<float>(4, 2) << 0, 0, w, 0, w, h, 0, h);
+    cv::Mat out_pt = (cv::Mat_<float>(4, 2) << ptt[0][0], ptt[0][1],
+        ptt[1][0], ptt[1][1], ptt[2][0], ptt[2][1], ptt[3][0], ptt[3][1]);
+
+    cv::Mat transform = cv::getPerspectiveTransform(in_pt, out_pt);
+
+    return transform;
+}
+
+void XRotationTransform::transform(float t, const cv::Mat& source, cv::Mat& result) const
+{
+    cv::warpPerspective( source, result, getHomography(t, source), source.size(), cv::INTER_CUBIC );
 }
 

@@ -12,15 +12,13 @@ OPENCV = $(OPENCV_LS) $(OPENCV_INCLUDES)
 
 LIB_DIR = -L../lib/
 
-LS = -ldescriptor
+LS = -lDRINK
 
 INCLUDES = -I../desc
 
 all: tst-desc.cpp
 	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv tst-desc ../bin/
-	$(CC) roc_curve.cpp -o roc_curve $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
-	mv roc_curve ../bin/
 	$(CC) train-pairs.cpp -o train-pairs $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
 	mv train-pairs ../bin/
 	

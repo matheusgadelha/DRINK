@@ -23,16 +23,17 @@ string itos(int i) // convert int to string
 
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
     //cv::DRINK::init();
-
-    std::vector<FeatureAlgorithm> algorithms;
+    
+    std::vector<FeatureAlgorithm>              algorithms;
     std::vector<cv::Ptr<ImageTransformation> > transformations;
 
     bool useCrossCheck = true;
 
     // Initialize list of algorithm tuples:
-
+       
     // algorithms.push_back(FeatureAlgorithm("BRISK",
     //     new cv::BRISK(60,4),
     //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
@@ -52,19 +53,19 @@ int main(int argc, const char* argv[]) {
     //     }
 
     algorithms.push_back(FeatureAlgorithm("DRINK",
-            new cv::ORB(),
-            new cv::DRINK(4, 6, 7, 64, false),
-            new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+        new cv::ORB(),
+        new cv::DRINK(4,6,7,64,false),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));            
 
     algorithms.push_back(FeatureAlgorithm("FREAK",
-            new cv::ORB(),
-            new cv::FREAK(true, true),
-            new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+        new cv::ORB(),
+        new cv::FREAK(true, true),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     algorithms.push_back(FeatureAlgorithm("ORB",
-            new cv::ORB(),
-            new cv::ORB(),
-            new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
+        new cv::ORB(),
+        new cv::ORB(),
+        new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
     // algorithms.push_back(FeatureAlgorithm("DRINK B4 S16 R6 K5",
     //     new cv::FastFeatureDetector(),
@@ -101,7 +102,7 @@ int main(int argc, const char* argv[]) {
     //     new cv::DRINK(9),
     //     new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
 
-
+    
     // algorithms.push_back(FeatureAlgorithm("FREAK",
     //     new cv::SurfFeatureDetector(),
     //     new cv::FREAK(),
@@ -122,7 +123,7 @@ int main(int argc, const char* argv[]) {
         new cv::SurfFeatureDetector(),
         new cv::SurfDRINKExtractor(),
         new cv::FlannBasedMatcher()));
-     */
+        */
 
 
     /*
@@ -141,43 +142,56 @@ int main(int argc, const char* argv[]) {
         new cv::FastFeatureDetector(50),
         new cv::BriefDRINKExtractor(),
         new cv::BFMatcher(cv::NORM_HAMMING, useCrossCheck)));
-     */
+
+
+
+    
+
+    /**/
 
     // Initialize list of used transformations:
-    if (USE_VERBOSE_TRANSFORMATIONS) {
+    if (USE_VERBOSE_TRANSFORMATIONS)
+    {
         transformations.push_back(new GaussianBlurTransform(9));
-        transformations.push_back(new BrightnessImageTransform(-127, +127, 1));
-        transformations.push_back(new ImageRotationTransformation(0, 360, 1, cv::Point2f(0.5f, 0.5f)));
+        transformations.push_back(new BrightnessImageTransform(-127, +127,1));
+        transformations.push_back(new ImageRotationTransformation(0, 360, 1, cv::Point2f(0.5f,0.5f)));
         transformations.push_back(new ImageScalingTransformation(0.25f, 2.0f, 0.01f));
-    } else {
+    }
+    else
+    {
         transformations.push_back(new GaussianBlurTransform(9));
-        transformations.push_back(new ImageRotationTransformation(0, 360, 10, cv::Point2f(0.5f, 0.5f)));
+        transformations.push_back(new ImageRotationTransformation(0, 360, 10, cv::Point2f(0.5f,0.5f)));
         transformations.push_back(new ImageScalingTransformation(0.25f, 2.0f, 0.1f));
-        transformations.push_back(new BrightnessImageTransform(-127, +127, 10));
+        transformations.push_back(new BrightnessImageTransform(-127, +127,10));
         // transformations.push_back(new YRotationTransform(-90, 90.0f, 1.0f));
         // transformations.push_back(new XRotationTransform(-90, 90.0f, 1.0f));
     }
 
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::cout << "At least one input image should be passed" << std::endl;
     }
 
-    for (int imageIndex = 1; imageIndex < argc; imageIndex++) {
+    for (int imageIndex = 1; imageIndex < argc; imageIndex++)
+    {
         std::string testImagePath(argv[imageIndex]);
         cv::Mat testImage = cv::imread(testImagePath);
 
         CollectedStatistics fullStat;
 
-        if (testImage.empty()) {
+        if (testImage.empty())
+        {
             std::cout << "Cannot read image from " << testImagePath << std::endl;
         }
 
-        for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++) {
-            const FeatureAlgorithm& alg = algorithms[algIndex];
+        for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
+        {
+            const FeatureAlgorithm& alg   = algorithms[algIndex];
 
             std::cout << "Testing " << alg.name << "...";
 
-            for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++) {
+            for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
+            {
                 const ImageTransformation& trans = *transformations[transformIndex].obj;
 
                 performEstimation(alg, trans, testImage.clone(), fullStat.getStatistics(alg.name, trans.name));
@@ -187,14 +201,15 @@ int main(int argc, const char* argv[]) {
         }
 
         fullStat.printAverage(std::cout, StatisticsElementHomographyError);
-
+        
+        
         std::ofstream performanceStr("Performance.txt");
         fullStat.printPerformanceStatistics(performanceStr);
 
         std::ofstream matchingRatioStr("MatchingRatio.txt");
-        fullStat.printStatistics(matchingRatioStr, StatisticsElementMatchingRatio);
+        fullStat.printStatistics(matchingRatioStr,  StatisticsElementMatchingRatio);
 
-        std::ofstream percentOfMatchesStr("PercentOfMatches.txt");
+        std::ofstream percentOfMatchesStr("PercentOfMatches.txt") ;
         fullStat.printStatistics(percentOfMatchesStr, StatisticsElementPercentOfMatches);
 
         std::ofstream percentOfCorrectMatchesStr("PercentOfCorrectMatches.txt");

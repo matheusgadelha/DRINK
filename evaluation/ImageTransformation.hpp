@@ -160,4 +160,42 @@ private:
     std::vector<cv::Mat> m_homographies;
 };
 
+class YRotationTransform : public ImageTransformation
+{
+public:
+    YRotationTransform(float _min, float _max, float _step);
+    
+    virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const;
+    virtual std::vector<float> getX() const;
+    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    
+private:
+    
+    float m_min;
+    float m_max;
+    float m_step;
+    
+    std::vector<float>   m_args;
+    std::vector<cv::Mat> m_homographies;
+};
+
+
+class XRotationTransform : public ImageTransformation
+{
+public:
+    XRotationTransform(float _min, float _max, float _step);
+    
+    virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const;
+    virtual std::vector<float> getX() const;
+    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    
+private:
+    
+    float m_min;
+    float m_max;
+    float m_step;
+    
+    std::vector<float>   m_args;
+    std::vector<cv::Mat> m_homographies;
+};
 #endif

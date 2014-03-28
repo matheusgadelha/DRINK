@@ -1,8 +1,8 @@
 CC = g++
 
-CFLAGS = -Wall -pg -msse2 -O4 -ggdb
+CFLAGS = -Wall -pg -ggdb
 
-OPENCV_LS = -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video
+OPENCV_LS = -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video -lopencv_nonfree
 
 OPENCV_INCLUDES = -I/usr/local/include/opencv2 -I/usr/local/include
 
@@ -10,13 +10,19 @@ OPENCV_SO = /usr/local/lib/libopencv_calib3d.so /usr/local/lib/libopencv_contrib
 
 OPENCV = $(OPENCV_LS) $(OPENCV_INCLUDES)
 
-all: DRINK.o
-	ar rvs libDRINK.a DRINK.o
-	ranlib libDRINK.a
-	mv libDRINK.a ../lib/
+LIB_DIR = -L../lib/
 
-DRINK.o: DRINK.cpp
-	$(CC) DRINK.cpp -c $(CFLAGS) $(OPENCV)
+LS = -lDRINK
+
+INCLUDES = -I../desc
+
+all: tst-desc.cpp
+	$(CC) tst-desc.cpp -o tst-desc $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv tst-desc ../bin/
+	$(CC) roc_curve.cpp -o roc_curve $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv roc_curve ../bin/
+	$(CC) train-pairs.cpp -o train-pairs $(CFLAGS) $(LIB_DIR) $(LS) $(OPENCV) $(INCLUDES) 
+	mv train-pairs ../bin/
 	
 clean:
-	rm -r *.o
+	cd .
