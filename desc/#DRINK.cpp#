@@ -196,7 +196,7 @@ namespace cv {
 	pairs.push_back(allPairsVec[bestPairs[i]]);
       }
 
-      //        selectPairs( 100.0f, 150.0f );
+      //selectPairs( 100.0f, 150.0f );
       //std::cout << pairs.size();
     }
 

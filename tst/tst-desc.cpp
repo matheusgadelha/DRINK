@@ -34,95 +34,102 @@
 using namespace cv;
 using namespace std;
 
-unsigned char testSmoothedSum(
-	const cv::Mat& sum,
-	const cv::KeyPoint& pt, 
-	int y, 
-	int x, 
-	const int _kernelSize
-){
-    static const int HALF_KERNEL = _kernelSize/2;
+void selectGoodMatches( vector<DMatch>& matches, vector<DMatch>& good_matches, int dist )
+{
+    good_matches.clear();
+    for( size_t i = 0; i<matches.size(); ++i )
+    {
+        if( matches[i].distance <= dist )
+        {
+            good_matches.push_back( matches[i] );
+        }
+    }
+}
 
-    int img_y = (int)(pt.pt.y) + y;
-    int img_x = (int)(pt.pt.x) + x;
-    int val = ( sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
-           - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
-           - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
-           + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) /((2*HALF_KERNEL+1)*(2*HALF_KERNEL+1));
+unsigned char testSmoothedSum(
+        const cv::Mat& sum,
+        const cv::KeyPoint& pt,
+        int y,
+        int x,
+        const int _kernelSize
+) {
+    static const int HALF_KERNEL = _kernelSize / 2;
+
+    int img_y = (int) (pt.pt.y) + y;
+    int img_x = (int) (pt.pt.x) + x;
+    int val = (sum.at<int>(img_y + HALF_KERNEL + 1, img_x + HALF_KERNEL + 1)
+            - sum.at<int>(img_y + HALF_KERNEL + 1, img_x - HALF_KERNEL)
+            - sum.at<int>(img_y - HALF_KERNEL, img_x + HALF_KERNEL + 1)
+            + sum.at<int>(img_y - HALF_KERNEL, img_x - HALF_KERNEL)) / ((2 * HALF_KERNEL + 1)*(2 * HALF_KERNEL + 1));
     return (unsigned char) val;
 }
 
-void showDRINKGeometry( DRINK& d, int scale, int rot)
-{
-	Mat img = Mat::zeros( 500, 500, CV_8UC3 );
+void showDRINKGeometry(DRINK& d, int scale, int rot) {
+    Mat img = Mat::zeros(500, 500, CV_8UC3);
 
-	for( int i = 0; i<d.ringSize * d.numRings; ++i )
-	{
-		circle(
-			img,
-			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
-					 img.rows/2 + d.geometryData[i][scale][rot].y),
-			1,
-			Scalar( 255, 255, 0)
-		);
-		circle(
-			img,
-			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
-					 img.rows/2 + d.geometryData[i][scale][rot].y),
-			d.geometryData[i][scale][rot].sigma,
-			Scalar( 0, 0, 255)
-		);
-	}
-	// for( int i=0; i < d.numPairs; ++i )
-	// {
-	// 	float colorAtt = 255.0f;
-	// 	line(
-	// 		img,
-	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
-	// 				 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
-	// 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
-	// 				 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
-	// 		Scalar( 0, colorAtt, colorAtt )
-	// 	);
-	// }
+    for (int i = 0; i < d.ringSize * d.numRings; ++i) {
+        circle(
+                img,
+                Point2i(img.cols / 2 + d.geometryData[i][scale][rot].x,
+                img.rows / 2 + d.geometryData[i][scale][rot].y),
+                1,
+                Scalar(255, 255, 0)
+                );
+        circle(
+                img,
+                Point2i(img.cols / 2 + d.geometryData[i][scale][rot].x,
+                img.rows / 2 + d.geometryData[i][scale][rot].y),
+                d.geometryData[i][scale][rot].sigma,
+                Scalar(0, 0, 255)
+                );
+    }
+    // for( int i=0; i < d.numPairs; ++i )
+    // {
+    // 	float colorAtt = 255.0f;
+    // 	line(
+    // 		img,
+    // 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2]][scale][rot].x,
+    // 				 img.rows/2 + d.geometryData[d.pairs[i*2]][scale][rot].y),
+    // 		Point2i( img.cols/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].x,
+    // 				 img.rows/2 + d.geometryData[d.pairs[i*2+1]][scale][rot].y),
+    // 		Scalar( 0, colorAtt, colorAtt )
+    // 	);
+    // }
 
-	imshow("Geometry Test", img);
-	waitKey();
+    imshow("Geometry Test", img);
+    waitKey();
 }
 
-void drawDRINKGeometryAtKp( Mat& img, DRINK& d, const int scale, const int rot, const KeyPoint& pt )
-{
-	for( int i = 0; i<d.ringSize * d.numRings; ++i )
-	{
-		circle(
-			img,
-			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
-					 img.rows/2 + d.geometryData[i][scale][rot].y),
-			1,
-			Scalar( 255, 255, 0 )
-		);
+void drawDRINKGeometryAtKp(Mat& img, DRINK& d, const int scale, const int rot, const KeyPoint& pt) {
+    for (int i = 0; i < d.ringSize * d.numRings; ++i) {
+        circle(
+                img,
+                Point2i(img.cols / 2 + d.geometryData[i][scale][rot].x,
+                img.rows / 2 + d.geometryData[i][scale][rot].y),
+                1,
+                Scalar(255, 255, 0)
+                );
 
-		circle(
-			img,
-			Point2i( img.cols/2 + d.geometryData[i][scale][rot].x,
-					 img.rows/2 + d.geometryData[i][scale][rot].y),
-			d.geometryData[i][scale][rot].sigma,
-			Scalar( 0, 0, 255 )
-		);
-	}
+        circle(
+                img,
+                Point2i(img.cols / 2 + d.geometryData[i][scale][rot].x,
+                img.rows / 2 + d.geometryData[i][scale][rot].y),
+                d.geometryData[i][scale][rot].sigma,
+                Scalar(0, 0, 255)
+                );
+    }
 
-	for( int i=0; i < d.numPairs; ++i )
-	{
-		float colorAtt = 255.0f;
-		line(
-			img,
-			Point2i( img.cols/2 + d.geometryData[d.pairs[i].a][scale][rot].x,
-					 img.rows/2 + d.geometryData[d.pairs[i].a][scale][rot].y),
-			Point2i( img.cols/2 + d.geometryData[d.pairs[i].b][scale][rot].x,
-					 img.rows/2 + d.geometryData[d.pairs[i].b][scale][rot].y),
-			Scalar( 0, colorAtt, colorAtt )
-		);
-	}
+    for (int i = 0; i < d.numPairs; ++i) {
+        float colorAtt = 255.0f;
+        line(
+                img,
+                Point2i(img.cols / 2 + d.geometryData[d.pairs[i].a][scale][rot].x,
+                img.rows / 2 + d.geometryData[d.pairs[i].a][scale][rot].y),
+                Point2i(img.cols / 2 + d.geometryData[d.pairs[i].b][scale][rot].x,
+                img.rows / 2 + d.geometryData[d.pairs[i].b][scale][rot].y),
+                Scalar(0, colorAtt, colorAtt)
+                );
+    }
 }
 
 // void printDRINKProcedure( Mat& img, DRINK& d, const int scale, const int rot, const KeyPoint& pt )
@@ -152,178 +159,49 @@ void drawDRINKGeometryAtKp( Mat& img, DRINK& d, const int scale, const int rot, 
 // 	// }
 // }
 
-int main( int argc, char* argv[])
-{
-	if( argc < 3)
-		cout << "ERROR: No image path passed as argument.\n";
+int main(int argc, char* argv[]) {
 
-	const char * img_path1 = argv[1];
-	const char * img_path2 = argv[2];
+    if (argc < 3)
+        cout << "ERROR: No image path passed as argument.\n";
 
-	Mat img_sum1, img_sum2;
+    const char * img_path1 = argv[1];
+    const char * img_path2 = argv[2];
 
-	cv::Mat img1 = imread( img_path1 );
-	cv::Mat img2 = imread( img_path2 );
-  	cv::Mat img2_scaled;
+    Mat img_sum1, img_sum2;
 
-	integral( img1, img_sum1, CV_32S );
-	integral( img2, img_sum2, CV_32S );
-
-	Ptr<FeatureDetector> fd = new ORB();
-	Ptr<DescriptorExtractor> de = new DRINK(4,6,7,64,true);
-	Ptr<DescriptorMatcher> dm = new cv::BFMatcher( cv::NORM_HAMMING, false );
-
-	vector<KeyPoint> kps1;
-	cv::Mat descs1;
-
-	vector<KeyPoint> kps2;
-	cv::Mat descs2;
-
-	vector<DMatch> matches;
-
-	fd->detect( img1, kps1 );
-	de->compute( img1, kps1, descs1);
-
-  for( double scale = 1.0; scale >= 0.25; scale = scale - 0.05 )
-  {
-    cv::resize(img2, img2_scaled, cv::Size(), scale, scale);
-
-    fd->detect( img2_scaled, kps2 );
-    de->compute( img2_scaled, kps2, descs2);
-
-    dm->match(descs1, descs2, matches);
-
+    Mat img1 = imread(img_path1);
+    Mat img2 = imread(img_path2);
     Mat img_matches;
-    drawMatches
-    (
-        img1, 
-        kps1, 
-        img2_scaled, 
-        kps2,
-        matches, 
-        img_matches, 
-        cv::Scalar(0,200,0,255), 
-        cv::Scalar::all(-1),
-        std::vector<char>(), 
-        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-    );
-    cv::imshow( "Scale Cmp", img_matches );
-    cv::waitKey();
-  }
+    
+    vector<KeyPoint> kps1, kps2;
+    vector<DMatch> matches, goodMatches;;
+    Mat desc1, desc2;
 
-  //std::cout << "Number of occurences per result\n";
-  //for( int i = 0; i < DRINK::result_statistics.size(); ++i )
-  //{
-  //  cout << static_cast< Ptr<DRINK> >(de)->results[i] << ": " << DRINK::result_statistics[i] << endl;
-  //}
+    Ptr<FeatureDetector> fd = new ORB();
+    Ptr<DescriptorExtractor> de = new DRINK(4, false, 6, 7, 64, false);
+    //Ptr<DescriptorExtractor> de = new DRINK(4, true, 6, 7, 64, false);
+    //Ptr<DescriptorExtractor> de = new FREAK();
+    Ptr<DescriptorMatcher> dm = new BFMatcher(NORM_HAMMING, false);
+    
+    fd->detect( img1, kps1 );
+    de->compute( img1, kps1, desc1 );
+    
+    fd->detect( img2, kps2 );
+    de->compute( img2, kps2, desc2 );
+    
+    dm->match( desc2, desc1, matches );
 
-    // std::cout << "Binary Values\n";
-    // for( int i = 0; i < static_cast< Ptr<DRINK> >(de)->bins.size(); ++i)
-    // {
-    // 	cout << i << ": " << static_cast< Ptr<DRINK> >(de)->bins[i] << endl;
-    // }
+    for(int i=1;;++i)
+    {
+        selectGoodMatches( matches, goodMatches, i);
+        if( goodMatches.size() >= 40 ) break;
+    }
+    // selectGoodMatches( matches, goodMatches, 20);
 
-  //   for( int i = kps1.size(); --i; )
-  //   {
-	 //    circle(
-		// 		img_matches,
-		// 		Point2i( kps1[i].pt.x, kps1[i].pt.y ),
-		// 		kps1[i].size,
-		// 		Scalar( 0, 0, 255 )
-		// 	); 
+    drawMatches( img2, kps2, img1, kps1, goodMatches, img_matches, Scalar(0,200,0), Scalar(0,200,0) );
+    imshow("Matches",img_matches);
+    waitKey();
 
-		// drawDRINKGeometryAtKp(
-		// 	img_matches,
-		// 	*(static_cast< Ptr<DRINK> >( de )),
-		// 	round(log(kps1[i].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
-		// 	0,
-		// 	kps1[i]
-		// );
-		// std::cout << kps1[i].size << std::endl;
-  //   }
+    return 0;
 
-  //   for( int i = kps2.size(); --i; )
-  //   {
-  //   	KeyPoint kp = kps2[i];
-  //   	kp.pt.x += img1.cols;
-
-	 //    circle(
-		// 		img_matches,
-		// 		Point2i( kp.pt.x, kp.pt.y ),
-		// 		kp.size,
-		// 		Scalar( 0, 0, 255 )
-		// 	); 
-
-		// drawDRINKGeometryAtKp(
-		// 	img_matches,
-		// 	*(static_cast< Ptr<DRINK> >( de )),
-		// 	round(log(kp.size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
-		// 	0,
-		// 	kp
-		// );
-		// std::cout << kps1[i].size << std::endl;
-  //   }
-
-    const int DRINK_type_size = ((float)static_cast< Ptr<DRINK> >(de)->numBits/8)*
-    									static_cast< Ptr<DRINK> >(de)->numPairs;
-
- //    uchar* desc = descs1.ptr(4);
- //    for( int i=0; i < DRINK_type_size; ++i )
-	// {
-	//    	std::cout << std::bitset<8>(desc[i]) << " ";
-	//   	// std::cout << (int)desc[i] << " ";
-	// }
-	// std::cout << std::endl;
-
-	// printDRINKProcedure(
-	// 	img1,
-	// 	*(static_cast< Ptr<DRINK> >( de )),
-	// 	round(log(kps1[4].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
-	// 	0,
-	// 	kps1[4]
-	// );
-	// std::cout << std::endl;
-
-	// desc = descs2.ptr(11);
- //    for( int i=0; i < DRINK_type_size; ++i )
-	// {
-	//    	std::cout << std::bitset<8>(desc[i]) << " ";
-	// }
-	// std::cout << std::endl;
-
-	// printDRINKProcedure(
-	// 	img2,
-	// 	*(static_cast< Ptr<DRINK> >( de )),
-	// 	round(log(kps2[11].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
-	// 	0,
-	// 	kps2[11]
-	// );
-	// std::cout << std::endl;
-
-	// desc = descs2.ptr(39);
- //    for( int i=0; i < DRINK_type_size; ++i )
-	// {
-	//    	std::cout << std::bitset<8>(desc[i]) << " ";
-	//   	// std::cout << (int)desc[i] << " ";
-	// }
-	// std::cout << std::endl;
-
-	// printDRINKProcedure(
-	// 	img2,
-	// 	*(static_cast< Ptr<DRINK> >( de )),
-	// 	round(log(kps2[39].size/DRINK::BIGGEST_RADIUS)/log(DRINK::SCALE_FACTOR)),
-	// 	0,
-	// 	kps2[39]
-	// );
-	// std::cout << std::endl;
-
-
-  //imshow( "Matches", img_matches );
-	//waitKey();
-
-	for( int i = 0; i < 30; ++i )
-		for( int j=0; j<100; ++j)
-			showDRINKGeometry(*(static_cast< Ptr<DRINK> >(de)),j,i);
-
-	return 0;
 }

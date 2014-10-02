@@ -38,7 +38,7 @@ namespace cv {
 
     public:
 
-        DRINK(int _numBits = 4, int _ringSize = 6, int _numRings = 7, int _pairs = 64, bool _allPairs = false);
+        DRINK(int _numBits = 4, bool _color = false, int _ringSize = 6, int _numRings = 7, int _pairs = 64, bool _allPairs = false);
 
         virtual int descriptorSize() const;
         virtual int descriptorType() const;
@@ -57,6 +57,7 @@ namespace cv {
         int numPairs;
         int numPoints;
         bool allPairs;
+        bool color;
 
         int radiusStep;
         int firstRadius;
