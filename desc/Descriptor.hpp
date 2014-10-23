@@ -91,8 +91,8 @@ namespace cv{
 		    void generateGeometry();
 		    void generateResults();
 		    void generateRandomPairs();
-	        void selectPairs( float _delta_min, float _delta_max );
-	        float l2Distance( PatternPoint a, PatternPoint b );
+        void selectPairs( float _delta_min, float _delta_max );
+        float l2Distance( PatternPoint a, PatternPoint b );
 		    void generateAllPairs();
 		    void increaseStatistics( const std::bitset<RBITS> r ) const;
 		    void increaseStatisticsForPair( const std::bitset<RBITS> r, int p, int kp ) const;

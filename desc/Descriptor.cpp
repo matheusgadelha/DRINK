@@ -1,6 +1,6 @@
 #include "Descriptor.hpp"
 
-inline 
+inline
 unsigned char valueAt( const cv::KeyPoint& kp, cv::Point2i p , cv::Mat& img )
 {
 	return img.at<unsigned char>( p.y + kp.pt.y, p.x + kp.pt.x );
@@ -14,11 +14,11 @@ unsigned char valueAtCenter( const cv::KeyPoint& kp, cv::Mat& img )
 
 inline
 unsigned char smoothedSum(
-  const cv::Mat& img,
+	const cv::Mat& img,
 	const cv::Mat& sum,
-	const cv::KeyPoint& pt, 
-	int y, 
-	int x, 
+	const cv::KeyPoint& pt,
+	int y,
+	int x,
 	const float _kernelSize
 ){
     // Interpolation code for sigma < 0.5
@@ -110,7 +110,7 @@ float stdDeviation( std::vector<int> dist, int size )
 namespace cv{
 
 	std::vector< int > Descriptor::result_statistics;
-  std::vector< int > Descriptor::patternSizes;
+  	std::vector< int > Descriptor::patternSizes;
 	std::vector< std::vector<int> > Descriptor::pair_result_statistics;
 	std::vector<Descriptor::TestPair> Descriptor::pairs;
 	std::vector<Descriptor::TestPair> Descriptor::allPairsVec;
@@ -161,7 +161,11 @@ namespace cv{
       firstRadius = radiusStep;
 
       int raw_pairs[] = {
-        1553, 1595, 1596, 344, 372, 627, 375, 467, 331, 47, 303, 415, 10, 666, 289, 373, 414, 247, 89, 5, 422, 426, 215, 665, 465, 258, 299, 582, 585, 623, 667, 718, 501, 677, 657, 90, 514, 593, 551, 133, 587, 333, 877, 82, 1085, 1715, 1128, 11, 1169, 846, 550, 43, 291, 762, 719, 835, 1013, 509, 1589, 1381, 1018, 1138, 1716, 1181
+        1553, 1595, 1596, 344, 372, 627, 375, 467, 331, 47, 303, 415, 10, 666, 289,
+		373, 414, 247, 89, 5, 422, 426, 215, 665, 465, 258, 299, 582, 585, 623, 667,
+		718, 501, 677, 657, 90, 514, 593, 551, 133, 587, 333, 877, 82, 1085, 1715,
+		1128, 11, 1169, 846, 550, 43, 291, 762, 719, 835, 1013, 509, 1589, 1381,
+		1018, 1138, 1716, 1181
       };
 
       for( int i=0; i<sizeof(raw_pairs)/sizeof(int); ++i )
@@ -171,7 +175,7 @@ namespace cv{
 
       geometryData.resize( ringSize*numRings );
 
-      for( int i=0; i < ringSize*numRings; ++i ) 
+      for( int i=0; i < ringSize*numRings; ++i )
         geometryData[i].resize( SCALE_SAMPLES );
 
       for( int i=0; i < ringSize*numRings; ++i )
@@ -198,7 +202,7 @@ namespace cv{
         {
           pairs.push_back(allPairsVec[bestPairs[i]]);
         }
-        
+
 //        selectPairs( 100.0f, 150.0f );
         std::cout << pairs.size();
       }
@@ -208,7 +212,7 @@ namespace cv{
     }
 
     void Descriptor::generateRandomPairs()
-    { 
+    {
       for(int i=0; i<numPairs; ++i)
       {
         pairs.push_back( TestPair(rand() % (numPoints), rand() % (numPoints)) );
@@ -309,7 +313,7 @@ namespace cv{
         if( l2Distance(
               geometryData[allPairsVec[i].a][0][0],
               geometryData[allPairsVec[i].b][0][0]
-            ) < _delta_max && 
+            ) < _delta_max &&
             l2Distance(
               geometryData[allPairsVec[i].a][0][0],
               geometryData[allPairsVec[i].b][0][0]
@@ -401,11 +405,12 @@ namespace cv{
 
       for( size_t i_kp = keypoints.size(); i_kp--; )
       {
-        kpScales[i_kp] = std::max( std::min(log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor, SCALE_SAMPLES-1.0f), 0.0f );
+        kpScales[i_kp] =
+					std::max( std::min(log(keypoints[i_kp].size*inv_biggest_radius)*log_scale_factor, SCALE_SAMPLES-1.0f), 0.0f );
         if( keypoints[i_kp].pt.x <= patternSizes[kpScales[i_kp]] || //check if the description at this specific position and scale fits inside the image
             keypoints[i_kp].pt.y <= patternSizes[kpScales[i_kp]] ||
             keypoints[i_kp].pt.x >= image.cols-patternSizes[kpScales[i_kp]] ||
-            keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]] 
+            keypoints[i_kp].pt.y >= image.rows-patternSizes[kpScales[i_kp]]
           )
         {
           keypoints.erase(kpBegin+i_kp);
@@ -432,7 +437,7 @@ namespace cv{
         {
 
           if( bit_count == 8 )
-          {    
+          {
             inserted_chars++;
             bit_count = 0;
           }
