@@ -1,4 +1,6 @@
-descriptor
+DRINK - Discrete Robust Invariant Keypoints
 ==========
 
-Repo for an image descritpro research project.
+Code for the paper DRINK - Discrete Robust Invariant Keypoints. OpenCV required.
+
+To compile it, run the compile.sh script: $sh compile.sh
